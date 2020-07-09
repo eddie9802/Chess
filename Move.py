@@ -37,7 +37,7 @@ def get_pawn_moves(sqr):
     edgeOfBoard = 0
     if Board.turn == Colour.WHITE:
         move = 1
-        edgeOfBoard = 8
+        edgeOfBoard = 9
 
         # If pawn is at initial position then pawn can move 2 steps
         if sqr[1] == 2 and not Board.has_chess_piece((sqr[0], sqr[1] + 1)) and not Board.has_chess_piece((sqr[0], sqr[1] + 2)):
@@ -49,7 +49,7 @@ def get_pawn_moves(sqr):
             check_en_passant(sqr, Board.bPassingPiecePos)
     else:
         move = -1
-        edgeOfBoard = 1
+        edgeOfBoard = 0
 
         # If pawn is at initial position then pawn can move 2 steps
         if sqr[1] == 7 and not Board.has_chess_piece((sqr[0], sqr[1] - 1)) and not Board.has_chess_piece((sqr[0], sqr[1] - 2)):
@@ -105,11 +105,13 @@ def get_rook_moves(pos):
             square = (pos[0], i)
             if not Board.has_chess_piece(square):
                 legalMoves.append(square)
-            elif (Board.has_chess_piece(square) and not Board.is_friendly_piece(square)):
-                legalMoves.append(square)
-                break
             else:
-                break
+                piece = Board.activePieces[square]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(square)
+                    break
+                else:
+                    break
         count += 1
         move = -1
         start = pos[1] + move
@@ -125,11 +127,13 @@ def get_rook_moves(pos):
             square = (chr(i + 97), pos[1])
             if not Board.has_chess_piece(square):
                 legalMoves.append(square)
-            elif (Board.has_chess_piece(square) and not Board.is_friendly_piece(square)):
-                legalMoves.append(square)
-                break
             else:
-                break
+                piece = Board.activePieces[square]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(square)
+                    break
+                else:
+                    break
         count += 1
         move = -1
         start = ord(pos[0]) - 97 + move
@@ -138,64 +142,116 @@ def get_rook_moves(pos):
     return legalMoves
 
 
-# Gets all the moves for the knight at pos
-def get_knight_moves(pos):
+# Gets all the moves for the knight at sqr
+def get_knight_moves(sqr):
     legalMoves = []
     
     # Checks for legal moves that are 2 squares above the knight
     # Checks if knight is at least 3 squares below the top of the board
-    if pos[1] + 2 <= 8:
+    if sqr[1] + 2 <= 8:
         # You can map the letters a - h to 0 - 7 by getting the char's unicode and subtracting 97
-        xNum = ord(pos[0]) - 97
+        xNum = ord(sqr[0]) - 97
 
         # Checks if knight is at the left side of board
-        if pos[0] != "a":
+        if sqr[0] != "a":
             leftX = chr(xNum + 96)
-            legalMoves.append((leftX, pos[1] + 2))
+            move = (leftX, sqr[1] + 2)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
         
         # Checks if knight is at the right side of board
-        if pos[0] != "h":
+        if sqr[0] != "h":
             rightX = chr(xNum + 98)
-            legalMoves.append((rightX, pos[1] + 2))
+            move = (rightX, sqr[1] + 2)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
 
     # Checks if the knight is at least 3 squares above the bottom of the board
-    if pos[1] - 2 >= 1:
-        xNum = ord(pos[0]) - 97
+    if sqr[1] - 2 >= 1:
+        xNum = ord(sqr[0]) - 97
 
         # Checks if knight is at the left side of board
-        if pos[0] != "a":
+        if sqr[0] != "a":
             leftX = chr(xNum + 96)
-            legalMoves.append((leftX, pos[1] - 2))
+            move = (leftX, sqr[1] - 2)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
         
         # Checks if knight is at the right side of board
-        if pos[0] != "h":
+        if sqr[0] != "h":
             rightX = chr(xNum + 98)
-            legalMoves.append((rightX, pos[1] - 2))
+            move = (rightX, sqr[1] - 2)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
+            
 
     # Checks if the knight is at least 2 squares below the top of the board
-    if pos[1] + 1 <= 8:
-        xNum = ord(pos[0]) - 97
+    if sqr[1] + 1 <= 8:
+        xNum = ord(sqr[0]) - 97
 
-        if pos[0] != "a" and pos[0] != "b":
+        if sqr[0] != "a" and sqr[0] != "b":
             leftX = chr(xNum + 95)
-            legalMoves.append((leftX, pos[1] + 1))
+            move = (leftX, sqr[1] + 1)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
 
-        if pos[0] != "g" and pos[0] != "h":
+        if sqr[0] != "g" and sqr[0] != "h":
             rightX = chr(xNum + 99)
-            legalMoves.append((rightX, pos[1] + 1))
+            move = (rightX, sqr[1] + 1)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
+            
     
 
     # Checks if the knight is at least 2 squares above the bottom of the board
-    if pos[1] - 1 >= 1:
-        xNum = ord(pos[0]) - 97
+    if sqr[1] - 1 >= 1:
+        xNum = ord(sqr[0]) - 97
 
-        if pos[0] != "a" and pos[0] != "b":
+        if sqr[0] != "a" and sqr[0] != "b":
             leftX = chr(xNum + 95)
-            legalMoves.append((leftX, pos[1] - 1))
+            move = (leftX, sqr[1] - 1)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
+            
 
-        if pos[0] != "g" and pos[0] != "h":
+        if sqr[0] != "g" and sqr[0] != "h":
             rightX = chr(xNum + 99)
-            legalMoves.append((rightX, pos[1] - 1))
+            move = (rightX, sqr[1] - 1)
+            if not Board.has_chess_piece(move):
+                legalMoves.append(move)
+            else:
+                piece = Board.activePieces[move]
+                if not Board.is_friendly_piece(piece):
+                    legalMoves.append(move)
+            
 
     return legalMoves
 
@@ -248,7 +304,8 @@ def get_bishop_moves(pos):
             xChar = chr(x + (moveRight * i) + 96)
             square = (xChar, newY)
             if Board.has_chess_piece(square):
-                if not Board.is_friendly_piece(square):
+                piece = Board.activePieces[square]
+                if not Board.is_friendly_piece(piece):
                     legalMoves.append(square)
                 break
             else:
@@ -287,9 +344,12 @@ def get_king_moves(pos):
             if x != 0 or y != 0: 
                 yChar = chr(ord(pos[0]) + x)
                 sqr = (yChar, pos[1] + y)
-                if Board.has_chess_piece(sqr) and not Board.is_friendly_piece(sqr) or not Board.has_chess_piece(sqr):
-                    print(sqr)
+                if not Board.has_chess_piece(sqr):
                     legalMoves.append(sqr)
+                else:
+                    piece = Board.activePieces[sqr]
+                    if not Board.is_friendly_piece(piece):
+                        legalMoves.append(sqr)
 
 
 

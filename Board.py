@@ -11,7 +11,10 @@ gameDisplay = None
 # Colours of the chess board
 beige = None
 gray = None
+highlight_beige = None
+highlight_gray = None
 orange = None
+highlightsOn = False
 
 # Square on the chess board that has been selected
 selectedSquare = ()
@@ -273,6 +276,8 @@ def move_piece(square):
     global bKingPos
     global wKingPos
 
+    remove_highlights()
+
     for move in legalMoves:
         if square == move:
 
@@ -322,12 +327,30 @@ def get_sqr_xy(sqr):
 
 
 def highlight_square(sqr):
-    #x, y = get_sqr_xy(sqr)
-    #rect = pygame.Rect(100 * x, 100 * y)
-    draw_empty_square(sqr, orange)
+    colour = None
+    if get_square_colour(sqr) == beige:
+        colour = highlight_beige
+    else:
+        colour = highlight_gray
+    
+    draw_empty_square(sqr, colour)
     if has_chess_piece(sqr):
         piece = activePieces[sqr]
         draw_piece(piece, sqr)
+    global highlightsOn
+    highlightsOn = True
+
+
+def remove_highlights():
+    for sqr in legalMoves:
+        colour = get_square_colour(sqr)
+        draw_empty_square(sqr, colour)
+        if has_chess_piece(sqr):
+            piece = activePieces[sqr]
+            draw_piece(piece, sqr)
+    global highlightsOn
+    highlightsOn = False
+            
 
 
 
@@ -352,6 +375,8 @@ def select_square(pos):
 
         # If square has a friendly piece then select square
         if is_friendly_piece(clickedPiece):
+            if highlightsOn:
+                remove_highlights()
             draw_selection(square)
             selectedSquare = square
             # check if square user has clicked on is a legal move
@@ -402,12 +427,16 @@ def init(pgame, gDisplay):
     global gameDisplay
     global beige
     global gray
+    global highlight_beige
+    global highlight_gray
     global orange
     pygame = pgame
     gameDisplay = gDisplay
     beige = pygame.Color(245,245,220)
     gray = pygame.Color(128,128,128)
-    orange = pygame.Color(255,165,0)
+    highlight_beige = pygame.Color(245,245,170)
+    highlight_gray = pygame.Color(128, 128, 78)
+    orange = pygame.Color(255,140,0)
     set_up_board()
 
 

@@ -2,33 +2,25 @@ import array
 import math
 
 import Move
+import Draw
 from Colour import Colour
 from PieceType import PieceType
 
 # These global variables will be initialised in the function init
 pygame = None
-gameDisplay = None
-# Colours of the chess board
-beige = None
-gray = None
-highlight_beige = None
-highlight_gray = None
-orange = None
-highlightsOn = False
+GAME_DISPLAY = None
 
 # Square on the chess board that has been selected
-selectedSquare = ()
+selectedSquare = None
 
-# Active pieces holds all of the pieces that are currently on the chess board.  It is a dictionary that is index by the pieces position
-# Is initialised by the set_up_board function
-activePieces = None
-unactivePieces = {}
+highlightsOn = False
+
 
 # The colour of the player who is taking their turn
 turn = Colour.WHITE
 
 legalMoves = [] # All the legal moves that the selected piece can make
-enPassantMove = ()
+enPassantMove = None
 
 # The positions of the white and black pawns that have just moved two squares
 wPassingPiecePos = ()
@@ -108,81 +100,24 @@ def get_all_pieces():
 
     return allPieces
 
-
-# Fills the chess board
-def populate_board():
-    # Draws Black rooks
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-rook.png"), (100, 100))
-    gameDisplay.blit(image, (0,0))
-    gameDisplay.blit(image, (700, 0))
-
-    # Draws black knights
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-knight.png"), (100, 100))
-    gameDisplay.blit(image, (100,0))
-    gameDisplay.blit(image, (600, 0))
-
-    # Draws black bishops
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-bishop.png"), (100, 100))
-    gameDisplay.blit(image, (200,0))
-    gameDisplay.blit(image, (500, 0))
-
-    # Draws black queen
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-queen.png"), (100, 100))
-    gameDisplay.blit(image, (300,0))
-
-    # Draws black king
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-king.png"), (100, 100))
-    gameDisplay.blit(image, (400,0))
-
-    # Draws black pawn
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-pawn.png"), (100, 100))
-    for x in range(8):
-        gameDisplay.blit(image, (x * 100,100))
-
-    
-
-    # Draws white rooks
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-rook.png"), (100, 100))
-    gameDisplay.blit(image, (0, 700))
-    gameDisplay.blit(image, (700, 700))
-
-    # Draws white knights
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-knight.png"), (100, 100))
-    gameDisplay.blit(image, (100,700))
-    gameDisplay.blit(image, (600, 700))
-
-    # Draws white bishops
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-bishop.png"), (100, 100))
-    gameDisplay.blit(image, (200, 700))
-    gameDisplay.blit(image, (500, 700))
-
-    # Draws white queen
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-queen.png"), (100, 100))
-    gameDisplay.blit(image, (300, 700))
-
-    # Draws white king
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-king.png"), (100, 100))
-    gameDisplay.blit(image, (400, 700))
-
-    # Draws white pawn
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-pawn.png"), (100, 100))
-    for x in range(8):
-        gameDisplay.blit(image, (x * 100, 600))
+# Active pieces holds all of the pieces that are currently on the chess board.  It is a dictionary that is index by the pieces position
+# Is initialised by the set_up_board function
+activePieces = get_all_pieces()
 
 
-# Takes a square's position and determines the colour of that square
+# Takes a sqr and determines the position of that square 
 def get_square_colour(sqr):
-    x = ord(sqr[0]) - 97
+    x = ord(sqr[0]) - 97 # Gets the unicode value of the x part of the squares position
     if x % 2 == 0:
         if sqr[1] % 2 == 0:
-            return beige
+            return Draw.WHITE
         else:
-            return gray
+            return Draw.BLACK
     else:
         if sqr[1] % 2 == 0:
-            return gray
+            return Draw.BLACK
         else:
-            return beige
+            return Draw.WHITE
 
 
 # Checks if square has a chess piece on it
@@ -193,24 +128,6 @@ def has_chess_piece(square_pos):
         return True
 
 
-# Removes the selection from the selected square
-def remove_selection():
-    global selectedSquare
-    if len(selectedSquare) > 0:
-        x = ord(selectedSquare[0]) - 97
-        y = (9 - selectedSquare[1]) - 1
-        colour = get_square_colour(selectedSquare)
-        rect = pygame.Rect(x * 100, y * 100, 100, 100)
-        pygame.draw.rect(gameDisplay, colour, rect)
-
-
-        piece_path = "./Images/pieces/01_classic/" + activePieces[selectedSquare][2] + ".png"
-        image = pygame.transform.scale(pygame.image.load(piece_path), (100, 100))
-        gameDisplay.blit(image, (x * 100, y * 100))
-
-        selectedSquare = ()
-
-
 # Determines if the piece is a friendly piece
 def is_friendly_piece(piece):
     if turn == piece[0]:
@@ -219,44 +136,16 @@ def is_friendly_piece(piece):
         return False
 
 
-# Draws a square around the selected square of the chess board
-def draw_selection(square):
-    x = ord(square[0]) - 97
-    y = (9 - square[1]) - 1
-
-    # Removes the selection from the previously selected square
-    remove_selection()
-
-    # Draws a border around a square by drawing two overlapping squares
-    rect1 = pygame.Rect(x * 100, y * 100, 100, 100)
-    aqua_blue = pygame.Color(40, 113, 134)
-    pygame.draw.rect(gameDisplay, aqua_blue, rect1)
-
-    rect2 = pygame.Rect(x * 100 + 5, y * 100 + 5, 90, 90)
-    rect2_colour = get_square_colour(square)
-    pygame.draw.rect(gameDisplay, rect2_colour, rect2)
-
-    piece_path = "./Images/pieces/01_classic/" + activePieces[square][2] + ".png"
-    image = pygame.transform.scale(pygame.image.load(piece_path), (100, 100))
-    gameDisplay.blit(image, (x * 100, y * 100))
-
-
-# Draws piece at square
-def draw_piece(piece, square):
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/" + piece[2] + ".png"), (100, 100))
-    x = ord(square[0]) - 97 # Gets the x axis value of the piece
-
-    y = 8 - square[1]
-    gameDisplay.blit(image, (x * 100, y * 100))
-
-
-# Draws an empty square at the position square
-def draw_empty_square(square, colour):
-    x = ord(square[0]) - 97
-    y = 8 - square[1]
-
-    rect = pygame.Rect(x * 100, y * 100, 100, 100)
-    pygame.draw.rect(gameDisplay, colour, rect)
+def promote_pawn(pos):
+    sqr = get_sqr_from_xy(pos)
+    
+    if has_chess_piece(sqr):
+        piece = activePieces[sqr]
+        if Colour.WHITE == piece[0] and piece[1] == PieceType.PAWN and sqr[1] == 8:
+            print("Promote white pawn!")
+        elif Colour.BLACK == piece[0] and piece[1] == PieceType.PAWN  and sqr[1] == 1:
+            print("Promote black pawn!")
+    
 
 
 # Sets the global varaible turn to the other colour
@@ -268,6 +157,16 @@ def change_turn():
         turn = Colour.WHITE
 
 
+# Removes all the highlights from the on screen board
+# The highlighted squares will be all the legal moves a piece can make as well as any enpassant moves
+def get_highlighted_sqrs():
+    highlighted_sqrs = legalMoves
+    if enPassantMove != None:
+        highlighted_sqrs.append(enPassantMove)
+    return highlighted_sqrs
+
+
+
 
 # Makes the piece specified by selected square to the square position
 def move_piece(square):
@@ -275,8 +174,13 @@ def move_piece(square):
     global enPassantMove
     global bKingPos
     global wKingPos
+    global highlightsOn
+    global selectedSquare
 
-    remove_highlights()
+
+    highlighted_sqrs = get_highlighted_sqrs()
+    Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+    highlightsOn = False
 
     for move in legalMoves:
         if square == move:
@@ -290,14 +194,16 @@ def move_piece(square):
             piece = activePieces[selectedSquare]
             activePieces[square] = piece # Make the enemy pieces position equal to piece
             selSquare = selectedSquare
-            remove_selection()
+            Draw.remove_selection(GAME_DISPLAY)
+            selectedSquare = None
             del activePieces[selSquare]
             colour = get_square_colour(square)
-            draw_empty_square(square, colour)
-            draw_piece(piece, square)
+            Draw.draw_empty_square(GAME_DISPLAY, square, colour)
+            Draw.draw_piece(GAME_DISPLAY, piece, square)
             colour2 = get_square_colour(selSquare)
-            draw_empty_square(selSquare, colour2)
+            Draw.draw_empty_square(GAME_DISPLAY, selSquare, colour2)
             change_turn()
+            enPassantMove = None
             return
             
     # Check for en passant move
@@ -310,53 +216,24 @@ def move_piece(square):
         piece = activePieces[selectedSquare]
         activePieces[square] = piece
         selSquare = selectedSquare
-        remove_selection()
+        Draw.remove_selection(GAME_DISPLAY)
         del activePieces[selSquare]
-        draw_piece(piece, square)
+        Draw.draw_piece(GAME_DISPLAY, piece, square)
         colour1 = get_square_colour(selSquare)
         colour2 = get_square_colour(enemySqr)
-        draw_empty_square(selSquare, colour1)
-        draw_empty_square(enemySqr, colour2)
+        Draw.draw_empty_square(GAME_DISPLAY, selSquare, colour1)
+        Draw.draw_empty_square(GAME_DISPLAY, enemySqr, colour2)
         change_turn()
+        enPassantMove = None
 
 
 def get_sqr_xy(sqr):
     x = ord(sqr[0]) - 97
     y = (8 - (sqr[1] - 1)) - 1
     return x, y
-
-
-def highlight_square(sqr):
-    colour = None
-    if get_square_colour(sqr) == beige:
-        colour = highlight_beige
-    else:
-        colour = highlight_gray
-    
-    draw_empty_square(sqr, colour)
-    if has_chess_piece(sqr):
-        piece = activePieces[sqr]
-        draw_piece(piece, sqr)
-    global highlightsOn
-    highlightsOn = True
-
-
-def remove_highlights():
-    for sqr in legalMoves:
-        colour = get_square_colour(sqr)
-        draw_empty_square(sqr, colour)
-        if has_chess_piece(sqr):
-            piece = activePieces[sqr]
-            draw_piece(piece, sqr)
-    global highlightsOn
-    highlightsOn = False
             
 
-
-
-# Selects the square that was clicked on.  If user clicks on a friend piece then that piece is selected to move.  If user picks a square that does
-# not have a friendly piece then the user will either move to that square or attack the enemy square if the move was legal
-def select_square(pos):
+def get_sqr_from_xy(pos):
     x = pos[0]
     # This inverts the y value because in chess the y number increases from bottom to top
     y = 800 - pos[1]
@@ -364,10 +241,14 @@ def select_square(pos):
     xPos = math.floor(x / 100)
     yPos = math.floor(y / 100)
 
-
-
     # The square the user clicked on is found and the store is denoted by a letter and a number in a tuple
     square = (chr(xPos + 97), yPos + 1)
+    return square
+
+# Selects the square that was clicked on.  If user clicks on a friend piece then that piece is selected to move.  If user picks a square that does
+# not have a friendly piece then the user will either move to that square or attack the enemy square if the move was legal
+def select_square(pos):
+    square = get_sqr_from_xy(pos)
 
     global selectedSquare
     if has_chess_piece(square):
@@ -376,68 +257,33 @@ def select_square(pos):
         # If square has a friendly piece then select square
         if is_friendly_piece(clickedPiece):
             if highlightsOn:
-                remove_highlights()
-            draw_selection(square)
+                highlighted_sqrs = get_highlighted_sqrs()
+                Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+            Draw.draw_selection(GAME_DISPLAY, square)
             selectedSquare = square
             # check if square user has clicked on is a legal move
             selectedPiece = activePieces[selectedSquare]
             global legalMoves
             Move.check_for_check()
             legalMoves = Move.get_legal_moves(selectedPiece, selectedSquare)
-            for move in legalMoves:
-                highlight_square(move)
+            sqrs_to_highlight = get_highlighted_sqrs()
+            for sqr in sqrs_to_highlight:
+                Draw.highlight_square(GAME_DISPLAY, sqr)
 
         # Clicked on square has an enemy piece.  Check if a friend square has been selected to attack this piece
-        elif len(selectedSquare) == 2:
+        elif selectedSquare != None:
             move_piece(square)
 
-    elif len(selectedSquare) == 2:
+    elif selectedSquare != None:
         move_piece(square)
+    
 
-
-# Draws an empty board
-def draw_empty_board():
-    isBeige = False
-    for x in range(8):
-        isBeige = not isBeige
-        for y in range(8):
-            colour = None
-            if isBeige:
-                # Colours the square beige
-                colour = beige
-            else:
-                # Colours the square gray
-                colour = gray
-            rect = pygame.Rect(x * 100, y * 100, 100, 100)
-            pygame.draw.rect(gameDisplay, colour, rect)
-            isBeige = not isBeige
-
-
-
-# Places the the inital pieces into activePieces, draws an empty board, then populates it
-def set_up_board():
-    global activePieces
-    activePieces = get_all_pieces() # Puts all initial pieces of a chess board into activePieces
-    draw_empty_board() # Draws an empty board
-    populate_board() # Fills the empty board
-
-# Initialises pygame and gameDisplay and sets up the initial board
-def init(pgame, gDisplay):
-    global pygame
-    global gameDisplay
-    global beige
-    global gray
-    global highlight_beige
-    global highlight_gray
-    global orange
-    pygame = pgame
-    gameDisplay = gDisplay
-    beige = pygame.Color(245,245,220)
-    gray = pygame.Color(128,128,128)
-    highlight_beige = pygame.Color(245,245,170)
-    highlight_gray = pygame.Color(128, 128, 78)
-    orange = pygame.Color(255,140,0)
-    set_up_board()
+# Initialises pygame and GAME_DISPLAY and sets up the initial board
+def init(gameDisplay):
+    global GAME_DISPLAY
+    GAME_DISPLAY = gameDisplay
+    Draw.draw_empty_board(GAME_DISPLAY) # Draws an empty board
+    Draw.populate_board(GAME_DISPLAY) # Fills the empty board
 
 
 

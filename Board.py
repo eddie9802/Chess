@@ -29,6 +29,8 @@ bPassingPiecePos = ()
 wKingPos = ()
 bKingPos = ()
 
+sqr_length = 100
+
 
 
 def get_all_pieces():
@@ -241,10 +243,10 @@ def get_sqr_xy(sqr):
 def get_sqr_from_xy(pos):
     x = pos[0]
     # This inverts the y value because in chess the y number increases from bottom to top
-    y = 800 - pos[1]
+    y = (sqr_length * 8) - pos[1]
 
-    xPos = math.floor(x / 100)
-    yPos = math.floor(y / 100)
+    xPos = math.floor(x / sqr_length)
+    yPos = math.floor(y / sqr_length)
 
     # The square the user clicked on is found and the store is denoted by a letter and a number in a tuple
     square = (chr(xPos + 97), yPos + 1)

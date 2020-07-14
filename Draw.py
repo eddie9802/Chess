@@ -23,13 +23,13 @@ def remove_selection(gameDisplay):
         x = ord(selectedSquare[0]) - 97
         y = 8 - selectedSquare[1]
         colour = Board.get_square_colour(selectedSquare)
-        rect = pygame.Rect(x * 100, y * 100, 100, 100)
+        rect = pygame.Rect(x * Board.sqr_length, y * Board.sqr_length, Board.sqr_length, Board.sqr_length)
         pygame.draw.rect(gameDisplay, colour, rect)
 
 
         piece_path = "./Images/pieces/01_classic/" + Board.activePieces[selectedSquare][2] + ".png"
-        image = pygame.transform.scale(pygame.image.load(piece_path), (100, 100))
-        gameDisplay.blit(image, (x * 100, y * 100))
+        image = pygame.transform.scale(pygame.image.load(piece_path), (Board.sqr_length, Board.sqr_length))
+        gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
         Board.selectedSquare = None
 
@@ -45,26 +45,29 @@ def draw_selection(gameDisplay, square):
     remove_selection(gameDisplay)
 
     # Draws a border around a square by drawing two overlapping squares
-    rect1 = pygame.Rect(x * 100, y * 100, 100, 100)
+    rect1 = pygame.Rect(x * Board.sqr_length, y * Board.sqr_length, Board.sqr_length, Board.sqr_length)
     aqua_blue = pygame.Color(40, 113, 134)
     pygame.draw.rect(gameDisplay, aqua_blue, rect1)
 
-    rect2 = pygame.Rect(x * 100 + 5, y * 100 + 5, 90, 90)
+
+    tenth = math.floor(Board.sqr_length / 10)
+    twentieth = math.floor(Board.sqr_length / 20)
+    rect2 = pygame.Rect(x * Board.sqr_length + twentieth, y * Board.sqr_length + twentieth, Board.sqr_length - tenth, Board.sqr_length - tenth)
     rect2_colour = Board.get_square_colour(square)
     pygame.draw.rect(gameDisplay, rect2_colour, rect2)
 
     piece_path = "./Images/pieces/01_classic/" + Board.activePieces[square][2] + ".png"
-    image = pygame.transform.scale(pygame.image.load(piece_path), (100, 100))
-    gameDisplay.blit(image, (x * 100, y * 100))
+    image = pygame.transform.scale(pygame.image.load(piece_path), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
 
 # Draws piece at square
 def draw_piece(gameDisplay, piece, square):
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/" + piece[2] + ".png"), (100, 100))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/" + piece[2] + ".png"), (Board.sqr_length, Board.sqr_length))
     x = ord(square[0]) - 97 # Gets the x axis value of the piece
 
     y = 8 - square[1]
-    gameDisplay.blit(image, (x * 100, y * 100))
+    gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
 
 # Draws an empty square at the position square
@@ -72,7 +75,7 @@ def draw_empty_square(gameDisplay, square, colour):
     x = ord(square[0]) - 97
     y = 8 - square[1]
 
-    rect = pygame.Rect(x * 100, y * 100, 100, 100)
+    rect = pygame.Rect(x * Board.sqr_length, y * Board.sqr_length, Board.sqr_length, Board.sqr_length)
     pygame.draw.rect(gameDisplay, colour, rect)
 
 
@@ -88,7 +91,7 @@ def draw_empty_board(gameDisplay):
                 colour = BEIGE # Colours the square beige
             else:
                 colour = GRAY # Colours the square gray
-            rect = pygame.Rect(x * 100, y * 100, 100, 100)
+            rect = pygame.Rect(x * Board.sqr_length, y * Board.sqr_length, Board.sqr_length, Board.sqr_length)
             pygame.draw.rect(gameDisplay, colour, rect)
             isBeige = not isBeige
 
@@ -125,74 +128,75 @@ def remove_all_highlights(gameDisplay, highlighted_squares):
 # Fills the chess board
 def populate_board(gameDisplay):
 
+    length = Board.sqr_length
     # Draws all black pieces
 
     # Draws Black rooks
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-rook.png"), (100, 100))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-rook.png"), (Board.sqr_length, Board.sqr_length))
     gameDisplay.blit(image, (0,0))
-    gameDisplay.blit(image, (700, 0))
+    gameDisplay.blit(image, (length * 7, 0))
 
     # Draws black knights
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-knight.png"), (100, 100))
-    gameDisplay.blit(image, (100,0))
-    gameDisplay.blit(image, (600, 0))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-knight.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (Board.sqr_length,0))
+    gameDisplay.blit(image, (length * 6, 0))
 
     # Draws black bishops
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-bishop.png"), (100, 100))
-    gameDisplay.blit(image, (200,0))
-    gameDisplay.blit(image, (500, 0))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-bishop.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (length * 2,0))
+    gameDisplay.blit(image, (length * 5, 0))
 
     # Draws black queen
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-queen.png"), (100, 100))
-    gameDisplay.blit(image, (300,0))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-queen.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (length * 3,0))
 
     # Draws black king
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-king.png"), (100, 100))
-    gameDisplay.blit(image, (400,0))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-king.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (length * 4,0))
 
     # Draws black pawn
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-pawn.png"), (100, 100))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/b-pawn.png"), (Board.sqr_length, Board.sqr_length))
     for x in range(8):
-        gameDisplay.blit(image, (x * 100,100))
+        gameDisplay.blit(image, (x * Board.sqr_length,Board.sqr_length))
 
     
     # Draws all white pieces
 
     # Draws white rooks
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-rook.png"), (100, 100))
-    gameDisplay.blit(image, (0, 700))
-    gameDisplay.blit(image, (700, 700))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-rook.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (0, length * 7))
+    gameDisplay.blit(image, (length * 7, length * 7))
 
     # Draws white knights
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-knight.png"), (100, 100))
-    gameDisplay.blit(image, (100,700))
-    gameDisplay.blit(image, (600, 700))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-knight.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (Board.sqr_length, length * 7))
+    gameDisplay.blit(image, (length * 6, length * 7))
 
     # Draws white bishops
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-bishop.png"), (100, 100))
-    gameDisplay.blit(image, (200, 700))
-    gameDisplay.blit(image, (500, 700))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-bishop.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (length * 2, length * 7))
+    gameDisplay.blit(image, (length * 5, length * 7))
 
     # Draws white queen
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-queen.png"), (100, 100))
-    gameDisplay.blit(image, (300, 700))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-queen.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (length * 3, length * 7))
 
     # Draws white king
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-king.png"), (100, 100))
-    gameDisplay.blit(image, (400, 700))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-king.png"), (Board.sqr_length, Board.sqr_length))
+    gameDisplay.blit(image, (length * 4, length * 7))
 
     # Draws white pawn
-    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-pawn.png"), (100, 100))
+    image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-pawn.png"), (Board.sqr_length, Board.sqr_length))
     for x in range(8):
-        gameDisplay.blit(image, (x * 100, 600))
+        gameDisplay.blit(image, (x * length, length * 6))
 
 
 def draw_promotion_menu(gameDisplay, sqr):
     green = pygame.Color(124,252,0)
     draw_empty_square(gameDisplay, sqr, green)
 
-    x = (ord(sqr[0]) - 97) * 100
-    y = (8 - sqr[1]) * 100
+    x = (ord(sqr[0]) - 97) * Board.sqr_length
+    y = (8 - sqr[1]) * Board.sqr_length
     
     myfont = pygame.font.SysFont('Comic Sans MS', 30)
     rook = myfont.render('Rook', True, (0, 0, 0))
@@ -211,7 +215,7 @@ def draw_promotion_menu(gameDisplay, sqr):
 
 
 def draw_menu_selection(gameDisplay, sqr, pos):
-    y = (8 - sqr[1]) * 100
+    y = (8 - sqr[1]) * Board.sqr_length
     offset = pos[1] - y
     num = math.floor(offset / 20)
     piece = None
@@ -238,3 +242,13 @@ def draw_menu_selection(gameDisplay, sqr, pos):
     sqrColour = Board.get_square_colour(sqr)
     draw_empty_square(gameDisplay, sqr, sqrColour)
     draw_piece(gameDisplay, piece, sqr)
+
+
+def redraw_board(gameDisplay):
+    draw_empty_board(gameDisplay)
+
+    for sqr in Board.activePieces:
+        piece = Board.activePieces[sqr]
+        colour = Board.get_square_colour(sqr)
+        draw_empty_square(gameDisplay, sqr, colour)
+        draw_piece(gameDisplay, piece, sqr)

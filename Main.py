@@ -1,6 +1,7 @@
 import Board
 import pkg_resources.py2_warn
 import pygame
+import Draw
 
 
 HEIGHT = 800
@@ -32,7 +33,9 @@ def game_loop():
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    Board.remove_selection()
+                    highlighted_sqrs = Board.get_highlighted_sqrs()
+                    Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+                    Draw.remove_selection(GAME_DISPLAY)
 
         pygame.display.update()
         clock.tick(30)

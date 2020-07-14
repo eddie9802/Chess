@@ -14,7 +14,7 @@ GAME_DISPLAY = None
 selectedSquare = None
 
 highlightsOn = False
-
+promotion_menu_sqrs = []
 
 # The colour of the player who is taking their turn
 turn = Colour.WHITE
@@ -136,15 +136,17 @@ def is_friendly_piece(piece):
         return False
 
 
+# Promotes a pawn
 def promote_pawn(pos):
-    sqr = get_sqr_from_xy(pos)
+    sqr = get_sqr_from_xy(pos) # Gets window xy coordinates
     
     if has_chess_piece(sqr):
         piece = activePieces[sqr]
-        if Colour.WHITE == piece[0] and piece[1] == PieceType.PAWN and sqr[1] == 8:
-            print("Promote white pawn!")
-        elif Colour.BLACK == piece[0] and piece[1] == PieceType.PAWN  and sqr[1] == 1:
-            print("Promote black pawn!")
+
+        # Determines if the piece that was right clicked on was a pawn and the pawn is at the end of its run
+        if (turn == piece[0] and ((Colour.WHITE == piece[0] and piece[1] == PieceType.PAWN and sqr[1] == 8) or 
+            (Colour.BLACK == piece[0] and piece[1] == PieceType.PAWN  and sqr[1] == 1))):
+            Draw.draw_promotion_menu(GAME_DISPLAY, sqr)
     
 
 
@@ -160,7 +162,7 @@ def change_turn():
 # Removes all the highlights from the on screen board
 # The highlighted squares will be all the legal moves a piece can make as well as any enpassant moves
 def get_highlighted_sqrs():
-    highlighted_sqrs = legalMoves
+    highlighted_sqrs = [] + legalMoves
     if enPassantMove != None:
         highlighted_sqrs.append(enPassantMove)
     return highlighted_sqrs
@@ -178,13 +180,8 @@ def move_piece(square):
     global selectedSquare
 
 
-    highlighted_sqrs = get_highlighted_sqrs()
-    Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
-    highlightsOn = False
-
     for move in legalMoves:
         if square == move:
-
             # Sets the global king pos if the selected square was a king
             if selectedSquare == bKingPos:
                 bKingPos = square
@@ -195,7 +192,6 @@ def move_piece(square):
             activePieces[square] = piece # Make the enemy pieces position equal to piece
             selSquare = selectedSquare
             Draw.remove_selection(GAME_DISPLAY)
-            selectedSquare = None
             del activePieces[selSquare]
             colour = get_square_colour(square)
             Draw.draw_empty_square(GAME_DISPLAY, square, colour)
@@ -204,11 +200,14 @@ def move_piece(square):
             Draw.draw_empty_square(GAME_DISPLAY, selSquare, colour2)
             change_turn()
             enPassantMove = None
-            return
+
+            highlighted_sqrs = get_highlighted_sqrs()
+            Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+            highlightsOn = False
             
     # Check for en passant move
     if square == enPassantMove:
-        enemySqr = ()
+        enemySqr = None
         if turn == Colour.WHITE:
             enemySqr = (enPassantMove[0], enPassantMove[1] - 1)
         else:
@@ -225,6 +224,12 @@ def move_piece(square):
         Draw.draw_empty_square(GAME_DISPLAY, enemySqr, colour2)
         change_turn()
         enPassantMove = None
+
+        highlighted_sqrs = get_highlighted_sqrs()
+        Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+        highlightsOn = False
+    
+    selectedSquare = None
 
 
 def get_sqr_xy(sqr):
@@ -250,32 +255,35 @@ def get_sqr_from_xy(pos):
 def select_square(pos):
     square = get_sqr_from_xy(pos)
 
-    global selectedSquare
-    if has_chess_piece(square):
-        clickedPiece = activePieces[square]
+    if square in promotion_menu_sqrs:
+        Draw.draw_menu_selection(GAME_DISPLAY, square, pos)
+    else:
+        global selectedSquare
+        if has_chess_piece(square):
+            clickedPiece = activePieces[square]
 
-        # If square has a friendly piece then select square
-        if is_friendly_piece(clickedPiece):
-            if highlightsOn:
-                highlighted_sqrs = get_highlighted_sqrs()
-                Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
-            Draw.draw_selection(GAME_DISPLAY, square)
-            selectedSquare = square
-            # check if square user has clicked on is a legal move
-            selectedPiece = activePieces[selectedSquare]
-            global legalMoves
-            Move.check_for_check()
-            legalMoves = Move.get_legal_moves(selectedPiece, selectedSquare)
-            sqrs_to_highlight = get_highlighted_sqrs()
-            for sqr in sqrs_to_highlight:
-                Draw.highlight_square(GAME_DISPLAY, sqr)
+            # If square has a friendly piece then select square
+            if is_friendly_piece(clickedPiece):
+                if highlightsOn:
+                    highlighted_sqrs = get_highlighted_sqrs()
+                    Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+                Draw.draw_selection(GAME_DISPLAY, square)
+                selectedSquare = square
+                # check if square user has clicked on is a legal move
+                selectedPiece = activePieces[selectedSquare]
+                global legalMoves
+                Move.check_for_check()
+                legalMoves = Move.get_legal_moves(selectedPiece, selectedSquare)
+                sqrs_to_highlight = get_highlighted_sqrs()
+                for sqr in sqrs_to_highlight:
+                    Draw.highlight_square(GAME_DISPLAY, sqr)
 
-        # Clicked on square has an enemy piece.  Check if a friend square has been selected to attack this piece
+            # Clicked on square has an enemy piece.  Check if a friend square has been selected to attack this piece
+            elif selectedSquare != None:
+                move_piece(square)
+
         elif selectedSquare != None:
             move_piece(square)
-
-    elif selectedSquare != None:
-        move_piece(square)
     
 
 # Initialises pygame and GAME_DISPLAY and sets up the initial board

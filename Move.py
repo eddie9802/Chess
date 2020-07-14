@@ -14,7 +14,7 @@ def check_en_passant(sqr, passingPieceSqr):
     xPosNum = ord(sqr[0])
     passingPieceXNum = ord(passingPieceSqr[0])
     if passingPieceSqr[0] != "a":
-        if passingPieceXNum - xPosNum == 1:
+        if passingPieceXNum - xPosNum == 1 and sqr[1] == passingPieceSqr[1]:
             enPassantPos = (passingPieceSqr[0], passingPieceSqr[1] + move)
             if not Board.has_chess_piece(enPassantPos):
                 Board.enPassantMove = enPassantPos
@@ -22,7 +22,7 @@ def check_en_passant(sqr, passingPieceSqr):
                 return
 
     if passingPieceSqr[0] != "h":
-        if passingPieceXNum - xPosNum == -1:
+        if passingPieceXNum - xPosNum == -1 and sqr[1] == passingPieceSqr[1]:
             enPassantPos = (passingPieceSqr[0], passingPieceSqr[1] + move)
             if not Board.has_chess_piece(enPassantPos):
                 Board.enPassantMove = enPassantPos

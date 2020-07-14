@@ -1,6 +1,8 @@
 import pygame
+import math
 
 import Board
+from PieceType import PieceType
 from Colour import Colour
 
 
@@ -29,12 +31,15 @@ def remove_selection(gameDisplay):
         image = pygame.transform.scale(pygame.image.load(piece_path), (100, 100))
         gameDisplay.blit(image, (x * 100, y * 100))
 
+        Board.selectedSquare = None
+
+
 
 
 # Draws a square around the selected square of the chess board
 def draw_selection(gameDisplay, square):
     x = ord(square[0]) - 97
-    y = (9 - square[1]) - 1
+    y = 8 - square[1]
 
     # Removes the selection from the previously selected square
     remove_selection(gameDisplay)
@@ -180,3 +185,56 @@ def populate_board(gameDisplay):
     image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/w-pawn.png"), (100, 100))
     for x in range(8):
         gameDisplay.blit(image, (x * 100, 600))
+
+
+def draw_promotion_menu(gameDisplay, sqr):
+    green = pygame.Color(124,252,0)
+    draw_empty_square(gameDisplay, sqr, green)
+
+    x = (ord(sqr[0]) - 97) * 100
+    y = (8 - sqr[1]) * 100
+    
+    myfont = pygame.font.SysFont('Comic Sans MS', 30)
+    rook = myfont.render('Rook', True, (0, 0, 0))
+    knight = myfont.render('Knight', True, (0, 0, 0))
+    bishop = myfont.render('Bishop', True, (0, 0, 0))
+    queen = myfont.render('Queen', True, (0, 0, 0))
+    cancel = myfont.render('Cancel', True, (0, 0, 0))
+
+    gameDisplay.blit(rook,(x,y))
+    gameDisplay.blit(knight,(x, y + 20))
+    gameDisplay.blit(bishop,(x, y + 40))
+    gameDisplay.blit(queen,(x, y + 60))
+    gameDisplay.blit(cancel,(x, y + 80))
+
+    Board.promotion_menu_sqrs.append(sqr)
+
+
+def draw_menu_selection(gameDisplay, sqr, pos):
+    y = (8 - sqr[1]) * 100
+    offset = pos[1] - y
+    num = math.floor(offset / 20)
+    piece = None
+    colour = None
+    if Board.turn == Colour.WHITE:
+        colour = "w"
+    else:
+        colour = "b"
+    if num == 0:
+        piece = (Board.turn, PieceType.ROOK, colour + "-rook")
+        
+    elif num == 1:
+        piece = (Board.turn, PieceType.KNIGHT, colour + "-knight")
+    elif num == 2:
+        piece = (Board.turn, PieceType.BISHOP, colour + "-bishop")
+    elif num == 3:
+        piece = (Board.turn, PieceType.QUEEN, colour + "-queen")
+    elif num == 4:
+        piece = (Board.turn, PieceType.PAWN, colour + "-pawn")
+
+    Board.promotion_menu_sqrs.remove(sqr)
+
+    Board.activePieces[sqr] = piece
+    sqrColour = Board.get_square_colour(sqr)
+    draw_empty_square(gameDisplay, sqr, sqrColour)
+    draw_piece(gameDisplay, piece, sqr)

@@ -225,11 +225,11 @@ def move_piece(square):
         Draw.draw_empty_square(GAME_DISPLAY, selSquare, colour1)
         Draw.draw_empty_square(GAME_DISPLAY, enemySqr, colour2)
         change_turn()
-        enPassantMove = None
 
         highlighted_sqrs = get_highlighted_sqrs()
         Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
         highlightsOn = False
+        enPassantMove = None
     
     selectedSquare = None
 

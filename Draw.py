@@ -252,3 +252,11 @@ def redraw_board(gameDisplay):
         colour = Board.get_square_colour(sqr)
         draw_empty_square(gameDisplay, sqr, colour)
         draw_piece(gameDisplay, piece, sqr)
+    
+    selSqr = Board.selectedSquare
+    highlighted_sqrs = Board.get_highlighted_sqrs()
+    for sqr in highlighted_sqrs:
+        highlight_square(gameDisplay, sqr)
+    draw_selection(gameDisplay, Board.selectedSquare)
+    Board.selectedSquare = selSqr
+

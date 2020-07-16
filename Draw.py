@@ -257,6 +257,7 @@ def redraw_board(gameDisplay):
     highlighted_sqrs = Board.get_highlighted_sqrs()
     for sqr in highlighted_sqrs:
         highlight_square(gameDisplay, sqr)
-    draw_selection(gameDisplay, Board.selectedSquare)
+    if Board.selectedSquare != None:
+        draw_selection(gameDisplay, Board.selectedSquare)
     Board.selectedSquare = selSqr
 

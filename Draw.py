@@ -18,20 +18,20 @@ HIGHLIGHTED_BLACK = HIGHLIGHTED_GRAY
 
 # Removes the selection from the selected square
 def remove_selection(gameDisplay):
-    selectedSquare = Board.selectedSquare
-    if selectedSquare != None:
-        x = ord(selectedSquare[0]) - 97
-        y = 8 - selectedSquare[1]
-        colour = Board.get_square_colour(selectedSquare)
+    selected_sqr = Board.selected_sqr
+    if selected_sqr != None:
+        x = ord(selected_sqr[0]) - 97
+        y = 8 - selected_sqr[1]
+        colour = Board.get_square_colour(selected_sqr)
         rect = pygame.Rect(x * Board.sqr_length, y * Board.sqr_length, Board.sqr_length, Board.sqr_length)
         pygame.draw.rect(gameDisplay, colour, rect)
 
 
-        piece_path = "./Images/pieces/01_classic/" + Board.activePieces[selectedSquare][2] + ".png"
+        piece_path = "./Images/pieces/01_classic/" + Board.activePieces[selected_sqr][2] + ".png"
         image = pygame.transform.scale(pygame.image.load(piece_path), (Board.sqr_length, Board.sqr_length))
         gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
-        Board.selectedSquare = None
+        Board.selected_sqr = None
 
 
 
@@ -110,6 +110,7 @@ def highlight_square(gameDisplay, sqr):
     Board.highlightsOn = True
 
 
+# Removes the highlight from sqr
 def remove_highlight(gameDisplay, sqr):
     colour = Board.get_square_colour(sqr)
     draw_empty_square(gameDisplay, sqr, colour)
@@ -118,8 +119,10 @@ def remove_highlight(gameDisplay, sqr):
         draw_piece(gameDisplay, piece, sqr)
 
 
-def remove_all_highlights(gameDisplay, highlighted_squares):
-    for sqr in highlighted_squares:
+# Removes all the highlights that are current on the board
+def remove_all_highlights(gameDisplay):
+    highlighted_sqrs = Board.get_highlighted_sqrs()
+    for sqr in highlighted_sqrs:
         remove_highlight(gameDisplay, sqr)
     Board.highlightsOn = False
 
@@ -191,6 +194,7 @@ def populate_board(gameDisplay):
         gameDisplay.blit(image, (x * length, length * 6))
 
 
+# Draws the promotion menu on pawn's square when its at the end of its run and the user has right clicked on it
 def draw_promotion_menu(gameDisplay, sqr):
     green = pygame.Color(124,252,0)
     draw_empty_square(gameDisplay, sqr, green)
@@ -238,10 +242,17 @@ def draw_menu_selection(gameDisplay, sqr, pos):
 
     Board.promotion_menu_sqrs.remove(sqr)
 
+    # Updates active pieces, and draws the piece onto its now position
     Board.activePieces[sqr] = piece
     sqrColour = Board.get_square_colour(sqr)
     draw_empty_square(gameDisplay, sqr, sqrColour)
     draw_piece(gameDisplay, piece, sqr)
+
+
+def highlight_all_squares(gameDisplay):
+    highlighted_sqrs = Board.get_highlighted_sqrs()
+    for sqr in highlighted_sqrs:
+        highlight_square(gameDisplay, sqr)
 
 
 def redraw_board(gameDisplay):
@@ -253,11 +264,10 @@ def redraw_board(gameDisplay):
         draw_empty_square(gameDisplay, sqr, colour)
         draw_piece(gameDisplay, piece, sqr)
     
-    selSqr = Board.selectedSquare
-    highlighted_sqrs = Board.get_highlighted_sqrs()
-    for sqr in highlighted_sqrs:
-        highlight_square(gameDisplay, sqr)
-    if Board.selectedSquare != None:
-        draw_selection(gameDisplay, Board.selectedSquare)
-    Board.selectedSquare = selSqr
+    selSqr = Board.selected_sqr
+    highlight_all_squares(gameDisplay)
+
+    if Board.selected_sqr != None:
+        draw_selection(gameDisplay, Board.selected_sqr)
+    Board.selected_sqr = selSqr
 

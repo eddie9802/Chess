@@ -11,7 +11,7 @@ pygame = None
 GAME_DISPLAY = None
 
 # Square on the chess board that has been selected
-selectedSquare = None
+selected_sqr = None
 
 highlightsOn = False
 promotion_menu_sqrs = []
@@ -28,6 +28,9 @@ bPassingPiecePos = ()
 
 wKingPos = ()
 bKingPos = ()
+
+wKingMoved = False
+bKingMoved = False
 
 sqr_length = 100
 
@@ -179,20 +182,26 @@ def move_piece(square):
     global bKingPos
     global wKingPos
     global highlightsOn
-    global selectedSquare
+    global selected_sqr
+    global bKingMoved
+    global wKingMoved
 
 
     for move in legalMoves:
         if square == move:
             # Sets the global king pos if the selected square was a king
-            if selectedSquare == bKingPos:
+            if selected_sqr == bKingPos:
                 bKingPos = square
-            elif selectedSquare == wKingPos:
+                if not bKingMoved:
+                    bKingMoved = True
+            elif selected_sqr == wKingPos:
                 wKingPos = square
+                if not wKingMoved:
+                    wKingMoved = True
 
-            piece = activePieces[selectedSquare]
+            piece = activePieces[selected_sqr]
             activePieces[square] = piece # Make the enemy pieces position equal to piece
-            selSquare = selectedSquare
+            selSquare = selected_sqr
             Draw.remove_selection(GAME_DISPLAY)
             del activePieces[selSquare]
             colour = get_square_colour(square)
@@ -203,8 +212,7 @@ def move_piece(square):
             change_turn()
             enPassantMove = None
 
-            highlighted_sqrs = get_highlighted_sqrs()
-            Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+            Draw.remove_all_highlights(GAME_DISPLAY)
             highlightsOn = False
             
     # Check for en passant move
@@ -214,9 +222,9 @@ def move_piece(square):
             enemySqr = (enPassantMove[0], enPassantMove[1] - 1)
         else:
             enemySqr = (enPassantMove[0], enPassantMove[1] + 1)
-        piece = activePieces[selectedSquare]
+        piece = activePieces[selected_sqr]
         activePieces[square] = piece
-        selSquare = selectedSquare
+        selSquare = selected_sqr
         Draw.remove_selection(GAME_DISPLAY)
         del activePieces[selSquare]
         Draw.draw_piece(GAME_DISPLAY, piece, square)
@@ -226,12 +234,11 @@ def move_piece(square):
         Draw.draw_empty_square(GAME_DISPLAY, enemySqr, colour2)
         change_turn()
 
-        highlighted_sqrs = get_highlighted_sqrs()
-        Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+        Draw.remove_all_highlights(GAME_DISPLAY)
         highlightsOn = False
         enPassantMove = None
     
-    selectedSquare = None
+    selected_sqr = None
 
 
 def get_sqr_xy(sqr):
@@ -260,32 +267,124 @@ def select_square(pos):
     if square in promotion_menu_sqrs:
         Draw.draw_menu_selection(GAME_DISPLAY, square, pos)
     else:
-        global selectedSquare
+        global selected_sqr
         if has_chess_piece(square):
             clickedPiece = activePieces[square]
 
             # If square has a friendly piece then select square
             if is_friendly_piece(clickedPiece):
                 if highlightsOn:
-                    highlighted_sqrs = get_highlighted_sqrs()
-                    Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+                    Draw.remove_all_highlights(GAME_DISPLAY)
                 Draw.draw_selection(GAME_DISPLAY, square)
-                selectedSquare = square
+                selected_sqr = square
                 # check if square user has clicked on is a legal move
-                selectedPiece = activePieces[selectedSquare]
+                selectedPiece = activePieces[selected_sqr]
                 global legalMoves
                 Move.check_for_check()
-                legalMoves = Move.get_legal_moves(selectedPiece, selectedSquare)
+                legalMoves = Move.get_legal_moves(selectedPiece, selected_sqr)
                 sqrs_to_highlight = get_highlighted_sqrs()
                 for sqr in sqrs_to_highlight:
                     Draw.highlight_square(GAME_DISPLAY, sqr)
 
             # Clicked on square has an enemy piece.  Check if a friend square has been selected to attack this piece
-            elif selectedSquare != None:
+            elif selected_sqr != None:
                 move_piece(square)
 
-        elif selectedSquare != None:
+        elif selected_sqr != None:
             move_piece(square)
+
+
+def white_castle(rookSqr, newRookSqr, newKingSqr):
+    global wKingPos
+
+    wKing = activePieces[wKingPos]
+
+    # Draws empty square where king used to be
+    colour = get_square_colour(wKingPos)
+    Draw.draw_empty_square(GAME_DISPLAY, wKingPos, colour)
+
+    del activePieces[wKingPos]
+    activePieces[newKingSqr] = wKing
+
+    # Draws king in new position
+    Draw.draw_piece(GAME_DISPLAY, wKing, newKingSqr)
+
+    # Draws empty square where the rook used to be
+    colour = get_square_colour(rookSqr)
+    Draw.draw_empty_square(GAME_DISPLAY, rookSqr, colour)
+
+    rook = activePieces[rookSqr]
+
+    del activePieces[rookSqr]
+    activePieces[newRookSqr] = rook
+
+    # Draws rook in new position
+    Draw.draw_piece(GAME_DISPLAY, rook, newRookSqr)
+    Draw.remove_all_highlights(GAME_DISPLAY)
+
+
+def black_castle(rookSqr, newRookSqr, newKingSqr):
+    global bKingPos
+
+    wKing = activePieces[bKingPos]
+
+    # Draws empty square where king used to be
+    colour = get_square_colour(bKingPos)
+    Draw.draw_empty_square(GAME_DISPLAY, bKingPos, colour)
+
+    del activePieces[bKingPos]
+    activePieces[newKingSqr] = wKing
+
+    # Draws king in new position
+    Draw.draw_piece(GAME_DISPLAY, wKing, newKingSqr)
+
+    # Draws empty square where the rook used to be
+    colour = get_square_colour(rookSqr)
+    Draw.draw_empty_square(GAME_DISPLAY, rookSqr, colour)
+
+    rook = activePieces[rookSqr]
+
+    del activePieces[rookSqr]
+    activePieces[newRookSqr] = rook
+
+    # Draws rook in new position
+    Draw.draw_piece(GAME_DISPLAY, rook, newRookSqr)
+    Draw.remove_all_highlights(GAME_DISPLAY)
+
+
+def castle(pos):
+    global wKingPos
+    global bKingPos
+    global selected_sqr
+    global turn
+
+
+    sqr = get_sqr_from_xy(pos)
+    if has_chess_piece(sqr):
+        piece = activePieces[sqr]
+        if piece[1] == PieceType.ROOK and piece[0] == turn:
+            if piece[0] == Colour.WHITE and not wKingMoved and selected_sqr == wKingPos:
+                if sqr == ("a", 1) and not has_chess_piece(("b", 1)) and not has_chess_piece(("c", 1)):
+                    white_castle(sqr, ("c", 1), ("b", 1))
+
+                elif sqr == ("h", 1) and not has_chess_piece(("f", 1)) and not has_chess_piece(("g", 1)):
+                    white_castle(sqr, ("f", 1), ("g", 1))
+            else:
+                if sqr == ("a", 8) and not has_chess_piece(("b", 8)) and not has_chess_piece(("c", 8)):
+                    black_castle(sqr, ("c", 8), ("b", 8))
+
+                elif sqr == ("h", 8) and not has_chess_piece(("f", 8)) and not has_chess_piece(("g", 8)):
+                    black_castle(sqr, ("f", 8), ("g", 8))
+        selected_sqr = None
+        Draw.remove_selection(GAME_DISPLAY)
+        if turn == Colour.WHITE:
+            turn = Colour.BLACK
+        else:
+            turn = Colour.WHITE
+
+        
+             
+
     
 
 # Initialises pygame and GAME_DISPLAY and sets up the initial board

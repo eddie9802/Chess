@@ -210,10 +210,11 @@ def move_piece(square):
             colour2 = get_square_colour(selSquare)
             Draw.draw_empty_square(GAME_DISPLAY, selSquare, colour2)
             change_turn()
-            enPassantMove = None
 
             Draw.remove_all_highlights(GAME_DISPLAY)
             highlightsOn = False
+
+            selected_sqr = None
             
     # Check for en passant move
     if square == enPassantMove:
@@ -236,9 +237,8 @@ def move_piece(square):
 
         Draw.remove_all_highlights(GAME_DISPLAY)
         highlightsOn = False
-        enPassantMove = None
     
-    selected_sqr = None
+        selected_sqr = None
 
 
 def get_sqr_xy(sqr):
@@ -258,6 +258,15 @@ def get_sqr_from_xy(pos):
     # The square the user clicked on is found and the store is denoted by a letter and a number in a tuple
     square = (chr(xPos + 97), yPos + 1)
     return square
+
+
+def get_checker_piece():
+    checker = None
+    if turn == Colour.WHITE:
+        checker = Move.check_for_check(wKingPos)
+    else:
+        checker = Move.check_for_check(bKingPos)
+    return checker
 
 # Selects the square that was clicked on.  If user clicks on a friend piece then that piece is selected to move.  If user picks a square that does
 # not have a friendly piece then the user will either move to that square or attack the enemy square if the move was legal
@@ -280,8 +289,8 @@ def select_square(pos):
                 # check if square user has clicked on is a legal move
                 selectedPiece = activePieces[selected_sqr]
                 global legalMoves
-                Move.check_for_check()
-                legalMoves = Move.get_legal_moves(selectedPiece, selected_sqr)
+                checker = get_checker_piece()
+                legalMoves = Move.get_legal_moves(selectedPiece, selected_sqr, True, checker)
                 sqrs_to_highlight = get_highlighted_sqrs()
                 for sqr in sqrs_to_highlight:
                     Draw.highlight_square(GAME_DISPLAY, sqr)
@@ -292,6 +301,18 @@ def select_square(pos):
 
         elif selected_sqr != None:
             move_piece(square)
+
+
+# Loops through all of the pieces of the player that is next to move and checks if any one of their pieces can move
+#  If they can't then a checkmate has happeneded
+def check_for_checkmate():
+    checker = get_checker_piece()
+    for sqr in activePieces:
+        piece = activePieces[sqr]
+        if piece[0] == turn and len(Move.get_legal_moves(piece, sqr, True, checker)) > 0:
+            return False
+    return True
+
 
 
 def white_castle(rookSqr, newRookSqr, newKingSqr):
@@ -322,6 +343,14 @@ def white_castle(rookSqr, newRookSqr, newKingSqr):
     Draw.draw_piece(GAME_DISPLAY, rook, newRookSqr)
     Draw.remove_all_highlights(GAME_DISPLAY)
 
+    global selected_sqr
+    Draw.remove_selection(GAME_DISPLAY)
+    selected_sqr = None
+    if turn == Colour.WHITE:
+        turn = Colour.BLACK
+    else:
+        turn = Colour.WHITE
+
 
 def black_castle(rookSqr, newRookSqr, newKingSqr):
     global bKingPos
@@ -351,6 +380,14 @@ def black_castle(rookSqr, newRookSqr, newKingSqr):
     Draw.draw_piece(GAME_DISPLAY, rook, newRookSqr)
     Draw.remove_all_highlights(GAME_DISPLAY)
 
+    global selected_sqr
+    Draw.remove_selection(GAME_DISPLAY)
+    selected_sqr = None
+    if turn == Colour.WHITE:
+        turn = Colour.BLACK
+    else:
+        turn = Colour.WHITE
+
 
 def castle(pos):
     global wKingPos
@@ -369,18 +406,13 @@ def castle(pos):
 
                 elif sqr == ("h", 1) and not has_chess_piece(("f", 1)) and not has_chess_piece(("g", 1)):
                     white_castle(sqr, ("f", 1), ("g", 1))
-            else:
+            elif piece[0] == Colour.BLACK and not bKingMoved and selected_sqr == bKingPos:
                 if sqr == ("a", 8) and not has_chess_piece(("b", 8)) and not has_chess_piece(("c", 8)):
                     black_castle(sqr, ("c", 8), ("b", 8))
 
                 elif sqr == ("h", 8) and not has_chess_piece(("f", 8)) and not has_chess_piece(("g", 8)):
                     black_castle(sqr, ("f", 8), ("g", 8))
-        selected_sqr = None
-        Draw.remove_selection(GAME_DISPLAY)
-        if turn == Colour.WHITE:
-            turn = Colour.BLACK
-        else:
-            turn = Colour.WHITE
+        
 
         
              

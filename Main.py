@@ -28,6 +28,8 @@ def game_loop():
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
                 pos = pygame.mouse.get_pos()
                 Board.select_square(pos)
+                if Board.check_for_checkmate():
+                    print("Checkmate")
             
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT:
                 pos = pygame.mouse.get_pos()

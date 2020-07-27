@@ -352,11 +352,11 @@ def get_king_moves(kingSqr, checkForCheck):
                 yChar = chr(ord(kingSqr[0]) + x)
                 sqr = (yChar, kingSqr[1] + y)
                 if not Board.has_chess_piece(sqr):
-                    if checkForCheck and not check_for_check(sqr):
+                    if checkForCheck and not check_for_check(kingSqr, sqr):
                         legalMoves.append(sqr)
                 else:
                     piece = Board.activePieces[sqr]
-                    if king[0] != piece[0] and checkForCheck and not check_for_check(sqr):
+                    if king[0] != piece[0] and checkForCheck and not check_for_check(kingSqr, sqr):
                         legalMoves.append(sqr)
 
 
@@ -364,17 +364,139 @@ def get_king_moves(kingSqr, checkForCheck):
     return legalMoves
 
 
+def update_king_pos(oldKingPos, newKingPos):
+    king = Board.activePieces[oldKingPos]
+    del Board.activePieces[oldKingPos]
+    Board.activePieces[newKingPos] = king
 
-def check_for_check(kingPos):
+def revert_king_pos(oldKingPos, newKingPos, oldPieceInNewKingPos):
+    king = Board.activePieces[newKingPos]
+    del Board.activePieces[newKingPos]
+    Board.activePieces[oldKingPos] = king
+    if oldPieceInNewKingPos != None:
+        Board.activePieces[newKingPos] = oldPieceInNewKingPos
+
+def check_for_check(oldKingPos, newKingPos):
+    oldPieceInNewKingPos = None
+    if newKingPos != None:
+        if Board.has_chess_piece(newKingPos):
+            oldPieceInNewKingPos = Board.activePieces[newKingPos]
+        update_king_pos(oldKingPos, newKingPos)
     for item in Board.activePieces.items():
         piece = item[1]
         if piece[0] != Board.turn:
             pos = item[0]
             moves = get_legal_moves(piece, pos, False, None)
+            if newKingPos != None:
+                kingPos = newKingPos
+            else:
+                kingPos = oldKingPos
+
             if kingPos in moves:
+                if newKingPos != None:
+                    revert_king_pos(oldKingPos, newKingPos, oldPieceInNewKingPos)
                 return pos
+    if newKingPos != None:
+        revert_king_pos(oldKingPos, newKingPos, oldPieceInNewKingPos)
     return None
-            
+
+
+def get_current_king_pos():
+    kingPos = None
+    if Board.turn == Colour.WHITE:
+        kingPos = Board.wKingPos
+    else:
+        kingPos = Board.bKingPos
+    return kingPos
+
+
+def check_rook_line_of_sight(selSqr, checkerSqr, legalMoves):
+    newLegalMoves = []
+    kingPos = get_current_king_pos()
+
+    
+    # Has a vertical line of sight
+    if checkerSqr[0] == kingPos[0]:
+        start = 0
+        end = 0
+        if checkerSqr[1] < kingPos[1]:
+            start = checkerSqr[1]
+            end = kingPos[1]
+        else:
+            start = kingPos[1] + 1
+            end = checkerSqr[1] + 1
+
+        for rank in range(start, end):
+            losSqr = (checkerSqr[0], rank) # square in line of sight (los)
+            if losSqr in legalMoves:
+                newLegalMoves.append(losSqr)
+
+    # Has a horizontal line of sight
+    elif checkerSqr[1] == kingPos[1]:
+        checkerFileNum = ord(checkerSqr[0])
+        kingFileNum = ord(kingPos[0])
+        start = 0
+        end = 0
+        if checkerFileNum < kingFileNum:
+            start = checkerFileNum
+            end = kingFileNum
+        else:
+            start = kingFileNum + 1
+            end = checkerFileNum + 1
+
+        for fileNum in range(start, end):
+            file = chr(fileNum)
+            losSqr = (file, checkerSqr[1]) # square in line of sight (los)
+            if losSqr in legalMoves:
+                newLegalMoves.append(losSqr)
+
+
+    return newLegalMoves
+    
+
+
+def check_bishop_line_of_sight(selSqr, checkerSqr, legalMoves):
+    kingPos = get_current_king_pos()
+
+    newLegalMoves = []
+    kingFileNum = ord(kingPos[0])
+    checkerFileNum = ord(checkerSqr[0])
+    fileChange = 0
+    rankChange = 0
+
+    if kingFileNum < checkerFileNum:
+        fileChange = -1
+    else:
+        fileChange = 1
+
+    if kingPos[1] < checkerSqr[1]:
+        rankChange = -1
+    else:
+        rankChange = 1
+
+    end = abs(kingPos[1] - checkerSqr[1])
+
+    for i in range(end):
+        sqrFile = checkerFileNum + i * fileChange
+        sqrRank = checkerSqr[1] + i * rankChange
+        fileChar = chr(sqrFile)
+        sqr = (fileChar, sqrRank)
+        if sqr in legalMoves:
+            newLegalMoves.append(sqr)
+
+    return newLegalMoves
+
+
+
+def check_queen_line_of_sight(selSqr, checkerSqr, legalMoves):
+    newLegalMoves = []
+    kingPos = get_current_king_pos()
+    if kingPos[0] == checkerSqr[0] or kingPos[1] == checkerSqr[1]:
+        newLegalMoves = check_rook_line_of_sight(selSqr, checkerSqr, legalMoves)
+    else:
+        newLegalMoves = check_bishop_line_of_sight(selSqr, checkerSqr, legalMoves)
+    return newLegalMoves
+
 
 
 #  Gets all the legal moves piece can make
@@ -402,8 +524,18 @@ def get_legal_moves(piece, pos, checkForCheck, checker):
         legalMoves = get_king_moves(pos, checkForCheck)
 
     if checker != None and piece[1] != PieceType.KING:
-        if checker in legalMoves:
+        checkerPiece = Board.activePieces[checker]
+        if checkerPiece[1] != PieceType.PAWN and checkerPiece[1] != PieceType.KNIGHT:
+            if checkerPiece[1] == PieceType.ROOK:
+                legalMoves = check_rook_line_of_sight(pos, checker, legalMoves)
+            if checkerPiece[1] == PieceType.BISHOP:
+                legalMoves = check_bishop_line_of_sight(pos, checker, legalMoves)
+            if checkerPiece[1] == PieceType.QUEEN:
+                legalMoves = check_queen_line_of_sight(pos, checker, legalMoves)
+        elif checker in legalMoves:
             legalMoves = [checker]
         else:
             legalMoves = []
+
+        
     return legalMoves

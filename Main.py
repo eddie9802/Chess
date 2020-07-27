@@ -2,7 +2,11 @@ import Board
 import pkg_resources.py2_warn
 import pygame
 import Draw
+import ptext
+from Colour import Colour
+
 import math
+from time import sleep
 
 
 HEIGHT = 800
@@ -14,6 +18,8 @@ GAME_DISPLAY = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
 def game_loop():
     global GAME_DISPLAY
+    global HEIGHT
+    global WIDTH
     pygame.init()
     Board.init(GAME_DISPLAY)
     pygame.display.set_caption('My Chess')
@@ -29,7 +35,11 @@ def game_loop():
                 pos = pygame.mouse.get_pos()
                 Board.select_square(pos)
                 if Board.check_for_checkmate():
-                    print("Checkmate")
+                    if Board.turn != Colour.WHITE:
+                        ptext.draw("White wins!", (20, (HEIGHT / 2) - (HEIGHT / 8)), fontsize = HEIGHT / 8, color=(255, 0, 0))
+                    else:
+                        ptext.draw("Black wins!", (20, (HEIGHT / 2) - (HEIGHT / 8)), fontsize = HEIGHT / 8, color=(255, 0, 0))
+                    Board.GAME_FINISHED = True
             
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT:
                 pos = pygame.mouse.get_pos()
@@ -45,6 +55,8 @@ def game_loop():
 
             elif event.type == pygame.VIDEORESIZE:
                 length = min(event.size)
+                HEIGHT = length
+                WIDTH = length
                 Board.sqr_length = math.floor(length / 8)
                 GAME_DISPLAY = pygame.display.set_mode((length, length), pygame.RESIZABLE)
                 Board.GAME_DISPLAY = GAME_DISPLAY #  Sets the game display to the newly resized game display

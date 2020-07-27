@@ -1,5 +1,6 @@
 import pygame
 import math
+import ptext
 
 import Board
 from PieceType import PieceType
@@ -201,27 +202,21 @@ def draw_promotion_menu(gameDisplay, sqr):
 
     x = (ord(sqr[0]) - 97) * Board.sqr_length
     y = (8 - sqr[1]) * Board.sqr_length
+
+    sqr_length_fifth = Board.sqr_length / 5
     
-    myfont = pygame.font.SysFont('Comic Sans MS', 30)
-    rook = myfont.render('Rook', True, (0, 0, 0))
-    knight = myfont.render('Knight', True, (0, 0, 0))
-    bishop = myfont.render('Bishop', True, (0, 0, 0))
-    queen = myfont.render('Queen', True, (0, 0, 0))
-    cancel = myfont.render('Cancel', True, (0, 0, 0))
-
-    gameDisplay.blit(rook,(x,y))
-    gameDisplay.blit(knight,(x, y + 20))
-    gameDisplay.blit(bishop,(x, y + 40))
-    gameDisplay.blit(queen,(x, y + 60))
-    gameDisplay.blit(cancel,(x, y + 80))
-
-    Board.promotion_menu_sqrs.append(sqr)
+    ptext.draw("Rook", (x, y), fontsize = sqr_length_fifth*1.8, color=(0,0,0))
+    ptext.draw("Knight", (x, y + (sqr_length_fifth)), fontsize = sqr_length_fifth*1.8, color=(0,0,0))
+    ptext.draw("Bishop", (x, y + (sqr_length_fifth * 2)), fontsize = sqr_length_fifth*1.8, color=(0,0,0))
+    ptext.draw("Queen", (x, y + (sqr_length_fifth * 3)), fontsize = sqr_length_fifth*1.8, color=(0,0,0))
+    ptext.draw("Cancel", (x, y + (sqr_length_fifth * 4)), fontsize = sqr_length_fifth*1.8, color=(0,0,0))
 
 
 def draw_menu_selection(gameDisplay, sqr, pos):
+    sqr_length_fifth = Board.sqr_length / 5
     y = (8 - sqr[1]) * Board.sqr_length
     offset = pos[1] - y
-    num = math.floor(offset / 20)
+    num = math.floor(offset / sqr_length_fifth)
     piece = None
     colour = None
     if Board.turn == Colour.WHITE:
@@ -242,11 +237,21 @@ def draw_menu_selection(gameDisplay, sqr, pos):
 
     Board.promotion_menu_sqrs.remove(sqr)
 
-    # Updates active pieces, and draws the piece onto its now position
+    # Updates active pieces, and draws the piece onto its new position
     Board.activePieces[sqr] = piece
     sqrColour = Board.get_square_colour(sqr)
     draw_empty_square(gameDisplay, sqr, sqrColour)
     draw_piece(gameDisplay, piece, sqr)
+
+
+# Removes any promotion menus that are currently present on the board
+def remove_promotion_menus(gameDisplay):
+    for sqr in Board.promotion_menu_sqrs:
+        sqrColour = Board.get_square_colour(sqr)
+        draw_empty_square(gameDisplay, sqr, sqrColour)
+        piece = Board.activePieces[sqr]
+        draw_piece(gameDisplay, piece, sqr)
+    Board.promotion_menu_sqrs = []
 
 
 def highlight_all_squares(gameDisplay):
@@ -270,4 +275,16 @@ def redraw_board(gameDisplay):
     if Board.selected_sqr != None:
         draw_selection(gameDisplay, Board.selected_sqr)
     Board.selected_sqr = selSqr
+
+    for sqr in Board.promotion_menu_sqrs:
+        draw_promotion_menu(gameDisplay, sqr)
+
+    boardLength = Board.sqr_length * 8
+
+    if Board.GAME_FINISHED:
+        if Board.turn != Colour.WHITE:
+            ptext.draw("White wins!", (20, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
+        else:
+            ptext.draw("Black wins!", (20, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
+
 

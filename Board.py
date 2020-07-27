@@ -34,6 +34,8 @@ bKingMoved = False
 
 sqr_length = 100
 
+GAME_FINISHED = False
+
 
 
 def get_all_pieces():
@@ -141,17 +143,23 @@ def is_friendly_piece(piece):
         return False
 
 
+
 # Promotes a pawn
 def promote_pawn(pos):
+    global selected_sqr
+    Draw.remove_selection(GAME_DISPLAY)
     sqr = get_sqr_from_xy(pos) # Gets window xy coordinates
+    if highlightsOn:
+        Draw.remove_all_highlights(GAME_DISPLAY)
     
     if has_chess_piece(sqr):
         piece = activePieces[sqr]
 
         # Determines if the piece that was right clicked on was a pawn and the pawn is at the end of its run
         if (turn == piece[0] and ((Colour.WHITE == piece[0] and piece[1] == PieceType.PAWN and sqr[1] == 8) or 
-            (Colour.BLACK == piece[0] and piece[1] == PieceType.PAWN  and sqr[1] == 1))):
+            (Colour.BLACK == piece[0] and piece[1] == PieceType.PAWN  and sqr[1] == 1))) and sqr not in promotion_menu_sqrs:
             Draw.draw_promotion_menu(GAME_DISPLAY, sqr)
+            promotion_menu_sqrs.append(sqr)
     
 
 
@@ -185,6 +193,7 @@ def move_piece(square):
     global selected_sqr
     global bKingMoved
     global wKingMoved
+    global legalMoves
 
 
     for move in legalMoves:
@@ -215,6 +224,9 @@ def move_piece(square):
             highlightsOn = False
 
             selected_sqr = None
+
+            enPassantMove = None
+            legalMoves = []
             
     # Check for en passant move
     if square == enPassantMove:
@@ -239,6 +251,9 @@ def move_piece(square):
         highlightsOn = False
     
         selected_sqr = None
+    
+        enPassantMove = None
+        legalMoves = []
 
 
 def get_sqr_xy(sqr):
@@ -263,9 +278,9 @@ def get_sqr_from_xy(pos):
 def get_checker_piece():
     checker = None
     if turn == Colour.WHITE:
-        checker = Move.check_for_check(wKingPos)
+        checker = Move.check_for_check(wKingPos, None)
     else:
-        checker = Move.check_for_check(bKingPos)
+        checker = Move.check_for_check(bKingPos, None)
     return checker
 
 # Selects the square that was clicked on.  If user clicks on a friend piece then that piece is selected to move.  If user picks a square that does
@@ -284,6 +299,7 @@ def select_square(pos):
             if is_friendly_piece(clickedPiece):
                 if highlightsOn:
                     Draw.remove_all_highlights(GAME_DISPLAY)
+                Draw.remove_promotion_menus(GAME_DISPLAY)
                 Draw.draw_selection(GAME_DISPLAY, square)
                 selected_sqr = square
                 # check if square user has clicked on is a legal move
@@ -303,12 +319,22 @@ def select_square(pos):
             move_piece(square)
 
 
+def dict_to_list(dictionary):
+    dictList = []
+    for key, value in dictionary.items():
+        dictList.append((key, value))
+    return dictList
+
+
+
 # Loops through all of the pieces of the player that is next to move and checks if any one of their pieces can move
-#  If they can't then a checkmate has happeneded
+#  If they can't then a checkmate has happened
 def check_for_checkmate():
+    activePiecesList = dict_to_list(activePieces)
     checker = get_checker_piece()
-    for sqr in activePieces:
-        piece = activePieces[sqr]
+    for elem in activePiecesList:
+        sqr = elem[0]
+        piece = elem[1]
         if piece[0] == turn and len(Move.get_legal_moves(piece, sqr, True, checker)) > 0:
             return False
     return True

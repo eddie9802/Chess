@@ -49,8 +49,7 @@ def game_loop():
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    highlighted_sqrs = Board.get_highlighted_sqrs()
-                    Draw.remove_all_highlights(GAME_DISPLAY, highlighted_sqrs)
+                    Draw.remove_all_highlights(GAME_DISPLAY)
                     Draw.remove_selection(GAME_DISPLAY)
 
             elif event.type == pygame.VIDEORESIZE:

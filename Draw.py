@@ -283,8 +283,28 @@ def redraw_board(gameDisplay):
 
     if Board.GAME_FINISHED:
         if Board.turn != Colour.WHITE:
-            ptext.draw("White wins!", (20, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
+            ptext.draw("White wins!", (Board.sqr_length / 5, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
         else:
-            ptext.draw("Black wins!", (20, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
+            ptext.draw("Black wins!", (Board.sqr_length / 5, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
+
+def draw_main_menu(gameDisplay, width, height):
+    # Draws the main menu background
+    background = pygame.Rect(0, 0, width, height)
+    backgroundColour = pygame.Color(252, 219, 126)
+    pygame.draw.rect(gameDisplay, backgroundColour, background)
+
+    fontsize = min(width, height) / 8
+    newX = width / 80
+    newY = height / 16
+
+    # Draws the title
+    ptext.draw("Chess", (newX, newY), color=(255, 0, 0), fontsize = fontsize, underline=True)
+
+
+    itemFontSize = fontsize * 2/3
+    # Draws the items of the main menu
+    ptext.draw("2 player", (newX, newY * 4), color = (255, 0, 0), fontsize = itemFontSize)
+
+
 
 

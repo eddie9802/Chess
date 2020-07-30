@@ -17,21 +17,21 @@ def check_en_passant(sqr, passingPieceSqr):
         if passingPieceXNum - xPosNum == 1 and sqr[1] == passingPieceSqr[1]:
             enPassantPos = (passingPieceSqr[0], passingPieceSqr[1] + move)
             if not Board.has_chess_piece(enPassantPos):
-                Board.enPassantMove = enPassantPos
-            else:
-                return
+                return enPassantPos
+            return
 
     if passingPieceSqr[0] != "h":
         if passingPieceXNum - xPosNum == -1 and sqr[1] == passingPieceSqr[1]:
             enPassantPos = (passingPieceSqr[0], passingPieceSqr[1] + move)
             if not Board.has_chess_piece(enPassantPos):
-                Board.enPassantMove = enPassantPos
-            else:
-                return
+                return enPassantPos
+            return
 
 
 # Gets all of the moves that a pawn can make from sqr
 def get_pawn_moves(pawnSqr):
+    passingPiecePos = None
+    enPassantMove = None
     pawn = Board.activePieces[pawnSqr]
     legalMoves = []
     move = 0
@@ -44,10 +44,10 @@ def get_pawn_moves(pawnSqr):
         if pawnSqr[1] == 2 and not Board.has_chess_piece((pawnSqr[0], pawnSqr[1] + 1)) and not Board.has_chess_piece((pawnSqr[0], pawnSqr[1] + 2)):
             twoSqrMove = (pawnSqr[0], pawnSqr[1]+2)
             legalMoves.append(twoSqrMove)
-            Board.wPassingPiecePos = (pawnSqr[0], pawnSqr[1]+2)
+            passingPiecePos = (pawnSqr[0], pawnSqr[1]+2)
 
-        if len(Board.bPassingPiecePos) > 0:
-            check_en_passant(pawnSqr, Board.bPassingPiecePos)
+        if Board.bPassingPiecePos != None:
+            enPassantMove = check_en_passant(pawnSqr, Board.bPassingPiecePos)
     else:
         move = -1
         edgeOfBoard = 0
@@ -55,11 +55,11 @@ def get_pawn_moves(pawnSqr):
         # If pawn is at initial position then pawn can move 2 steps
         if pawnSqr[1] == 7 and not Board.has_chess_piece((pawnSqr[0], pawnSqr[1] - 1)) and not Board.has_chess_piece((pawnSqr[0], pawnSqr[1] - 2)):
             legalMoves.append((pawnSqr[0], pawnSqr[1]-2))
-            Board.bPassingPiecePos = (pawnSqr[0], pawnSqr[1]-2)
+            passingPiecePos = (pawnSqr[0], pawnSqr[1]-2)
 
         # Check for en passant for black player
-        if len(Board.wPassingPiecePos) > 0:
-            check_en_passant(pawnSqr, Board.wPassingPiecePos)
+        if Board.wPassingPiecePos != None:
+            enPassantMove = check_en_passant(pawnSqr, Board.wPassingPiecePos)
 
                 
 
@@ -88,7 +88,7 @@ def get_pawn_moves(pawnSqr):
             if pawn[0] != piece[0]:
                 legalMoves.append(pawnSqr)
 
-    return legalMoves
+    return legalMoves, passingPiecePos, enPassantMove
 
 
 
@@ -369,12 +369,14 @@ def update_king_pos(oldKingPos, newKingPos):
     del Board.activePieces[oldKingPos]
     Board.activePieces[newKingPos] = king
 
+
 def revert_king_pos(oldKingPos, newKingPos, oldPieceInNewKingPos):
     king = Board.activePieces[newKingPos]
     del Board.activePieces[newKingPos]
     Board.activePieces[oldKingPos] = king
     if oldPieceInNewKingPos != None:
         Board.activePieces[newKingPos] = oldPieceInNewKingPos
+
 
 def check_for_check(oldKingPos, newKingPos):
     oldPieceInNewKingPos = None
@@ -386,7 +388,7 @@ def check_for_check(oldKingPos, newKingPos):
         piece = item[1]
         if piece[0] != Board.turn:
             pos = item[0]
-            moves = get_legal_moves(piece, pos, False, None)
+            moves, passingPiecePos, enPassantMove = get_legal_moves(piece, pos, False, None)
             if newKingPos != None:
                 kingPos = newKingPos
             else:
@@ -501,17 +503,11 @@ def check_queen_line_of_sight(selSqr, checkerSqr, legalMoves):
 
 #  Gets all the legal moves piece can make
 def get_legal_moves(piece, pos, checkForCheck, checker):
-    Board.enPassantMove = None
-
-    # Turns the ability for en passant to happen off if the player that moved their pawn 2 squares moves again
-    if Board.turn == Colour.WHITE and len(Board.wPassingPiecePos) > 0:
-        Board.wPassingPiecePos = ()
-    elif Board.turn == Colour.BLACK and len(Board.bPassingPiecePos) > 0:
-        Board.bPassingPiecePos = ()
-
+    passingPiecePos = None
+    enPassantMove = None
     legalMoves = []
     if piece[1] == PieceType.PAWN:
-        legalMoves = get_pawn_moves(pos)
+        legalMoves, passingPiecePos, enPassantMove = get_pawn_moves(pos)
     elif piece[1] == PieceType.ROOK:
         legalMoves = get_rook_moves(pos)
     elif piece[1] == PieceType.KNIGHT:
@@ -538,4 +534,4 @@ def get_legal_moves(piece, pos, checkForCheck, checker):
             legalMoves = []
 
         
-    return legalMoves
+    return legalMoves, passingPiecePos, enPassantMove

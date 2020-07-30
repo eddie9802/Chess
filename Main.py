@@ -6,6 +6,7 @@ import ptext
 from Colour import Colour
 from Window import Window
 import MainMenu
+from PieceType import PieceType
 
 import math
 from time import sleep
@@ -80,8 +81,13 @@ def game_loop():
                     
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT:
                         pos = pygame.mouse.get_pos()
-                        Board.promote_pawn(pos)
-                        Board.castle(pos)
+                        sqr = Board.get_sqr_from_xy(pos)
+                        if Board.has_chess_piece(sqr):
+                            piece = Board.activePieces[sqr]
+                            if piece[1] == PieceType.ROOK:
+                                Board.castle(sqr)
+                            elif piece[1] == PieceType.PAWN:
+                                Board.promote_pawn(sqr)
 
 
                     elif event.type == pygame.KEYDOWN:

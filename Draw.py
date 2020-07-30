@@ -302,6 +302,7 @@ def draw_main_menu(gameDisplay, width, height):
 
 
     itemFontSize = fontsize * 2/3
+
     # Draws the items of the main menu
     ptext.draw("2 player", (newX, newY * 4), color = (255, 0, 0), fontsize = itemFontSize)
 

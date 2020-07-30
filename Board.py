@@ -23,8 +23,8 @@ legalMoves = [] # All the legal moves that the selected piece can make
 enPassantMove = None
 
 # The positions of the white and black pawns that have just moved two squares
-wPassingPiecePos = ()
-bPassingPiecePos = ()
+wPassingPiecePos = None
+bPassingPiecePos = None
 
 wKingPos = ()
 bKingPos = ()
@@ -145,10 +145,9 @@ def is_friendly_piece(piece):
 
 
 # Promotes a pawn
-def promote_pawn(pos):
+def promote_pawn(sqr):
     global selected_sqr
     Draw.remove_selection(GAME_DISPLAY)
-    sqr = get_sqr_from_xy(pos) # Gets window xy coordinates
     if highlightsOn:
         Draw.remove_all_highlights(GAME_DISPLAY)
     
@@ -227,7 +226,7 @@ def move_piece(square):
 
             enPassantMove = None
             legalMoves = []
-            
+    
     # Check for en passant move
     if square == enPassantMove:
         enemySqr = None
@@ -276,16 +275,23 @@ def get_sqr_from_xy(pos):
 
 
 def get_checker_piece():
+    global wPassingPiecePos
+    global bPassingPiecePos
+
     checker = None
     if turn == Colour.WHITE:
         checker = Move.check_for_check(wKingPos, None)
     else:
         checker = Move.check_for_check(bKingPos, None)
+
     return checker
 
 # Selects the square that was clicked on.  If user clicks on a friend piece then that piece is selected to move.  If user picks a square that does
 # not have a friendly piece then the user will either move to that square or attack the enemy square if the move was legal
 def select_square(pos):
+    global wPassingPiecePos
+    global bPassingPiecePos
+    global enPassantMove
     square = get_sqr_from_xy(pos)
 
     if square in promotion_menu_sqrs:
@@ -306,7 +312,17 @@ def select_square(pos):
                 selectedPiece = activePieces[selected_sqr]
                 global legalMoves
                 checker = get_checker_piece()
-                legalMoves = Move.get_legal_moves(selectedPiece, selected_sqr, True, checker)
+                # Turns the ability for en passant to happen off if the player that moved their pawn 2 squares moves again
+                if turn == Colour.WHITE and wPassingPiecePos != None:
+                    wPassingPiecePos = None
+                elif turn == Colour.BLACK and bPassingPiecePos != None:
+                    bPassingPiecePos = None
+                legalMoves, passingPiecePos, enPassantMove = Move.get_legal_moves(selectedPiece, selected_sqr, True, checker)
+                if turn == Colour.WHITE:
+                    wPassingPiecePos = passingPiecePos
+                else:
+                    bPassingPiecePos = passingPiecePos
+                enPassantMove = enPassantMove
                 sqrs_to_highlight = get_highlighted_sqrs()
                 for sqr in sqrs_to_highlight:
                     Draw.highlight_square(GAME_DISPLAY, sqr)
@@ -335,7 +351,8 @@ def check_for_checkmate():
     for elem in activePiecesList:
         sqr = elem[0]
         piece = elem[1]
-        if piece[0] == turn and len(Move.get_legal_moves(piece, sqr, True, checker)) > 0:
+        legalMoves, passingPiecePos, enPassantMove = Move.get_legal_moves(piece, sqr, True, checker)
+        if piece[0] == turn and len(legalMoves) > 0:
             return False
     return True
 
@@ -343,6 +360,7 @@ def check_for_checkmate():
 
 def white_castle(rookSqr, newRookSqr, newKingSqr):
     global wKingPos
+    global turn
 
     wKing = activePieces[wKingPos]
 
@@ -369,9 +387,6 @@ def white_castle(rookSqr, newRookSqr, newKingSqr):
     Draw.draw_piece(GAME_DISPLAY, rook, newRookSqr)
     Draw.remove_all_highlights(GAME_DISPLAY)
 
-    global selected_sqr
-    Draw.remove_selection(GAME_DISPLAY)
-    selected_sqr = None
     if turn == Colour.WHITE:
         turn = Colour.BLACK
     else:
@@ -380,6 +395,7 @@ def white_castle(rookSqr, newRookSqr, newKingSqr):
 
 def black_castle(rookSqr, newRookSqr, newKingSqr):
     global bKingPos
+    global turn
 
     wKing = activePieces[bKingPos]
 
@@ -406,37 +422,41 @@ def black_castle(rookSqr, newRookSqr, newKingSqr):
     Draw.draw_piece(GAME_DISPLAY, rook, newRookSqr)
     Draw.remove_all_highlights(GAME_DISPLAY)
 
-    global selected_sqr
-    Draw.remove_selection(GAME_DISPLAY)
-    selected_sqr = None
     if turn == Colour.WHITE:
         turn = Colour.BLACK
     else:
         turn = Colour.WHITE
 
 
-def castle(pos):
+def castle(sqr):
     global wKingPos
     global bKingPos
     global selected_sqr
     global turn
 
 
-    sqr = get_sqr_from_xy(pos)
     if has_chess_piece(sqr):
         piece = activePieces[sqr]
         if piece[1] == PieceType.ROOK and piece[0] == turn:
             if piece[0] == Colour.WHITE and not wKingMoved and selected_sqr == wKingPos:
                 if sqr == ("a", 1) and not has_chess_piece(("b", 1)) and not has_chess_piece(("c", 1)):
+                    Draw.remove_selection(GAME_DISPLAY)
+                    selected_sqr = None
                     white_castle(sqr, ("c", 1), ("b", 1))
 
                 elif sqr == ("h", 1) and not has_chess_piece(("f", 1)) and not has_chess_piece(("g", 1)):
+                    Draw.remove_selection(GAME_DISPLAY)
+                    selected_sqr = None
                     white_castle(sqr, ("f", 1), ("g", 1))
             elif piece[0] == Colour.BLACK and not bKingMoved and selected_sqr == bKingPos:
                 if sqr == ("a", 8) and not has_chess_piece(("b", 8)) and not has_chess_piece(("c", 8)):
+                    Draw.remove_selection(GAME_DISPLAY)
+                    selected_sqr = None
                     black_castle(sqr, ("c", 8), ("b", 8))
 
                 elif sqr == ("h", 8) and not has_chess_piece(("f", 8)) and not has_chess_piece(("g", 8)):
+                    Draw.remove_selection(GAME_DISPLAY)
+                    selected_sqr = None
                     black_castle(sqr, ("f", 8), ("g", 8))
         
 

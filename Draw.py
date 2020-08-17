@@ -17,8 +17,8 @@ HIGHLIGHTED_WHITE = HIGHLIGHTED_BEIGE
 HIGHLIGHTED_BLACK = HIGHLIGHTED_GRAY
 
 
-# Removes the selection from the selected square
-def remove_selection(gameDisplay):
+def remove_selection_outline(gameDisplay):
+    """Removes the selection outline from the current selected square"""
     selected_sqr = Board.selected_sqr
     if selected_sqr != None:
         x = ord(selected_sqr[0]) - 97
@@ -32,7 +32,6 @@ def remove_selection(gameDisplay):
         image = pygame.transform.scale(pygame.image.load(piece_path), (Board.sqr_length, Board.sqr_length))
         gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
-        Board.selected_sqr = None
 
 
 
@@ -43,7 +42,7 @@ def draw_selection(gameDisplay, square):
     y = 8 - square[1]
 
     # Removes the selection from the previously selected square
-    remove_selection(gameDisplay)
+    remove_selection_outline(gameDisplay)
 
     # Draws a border around a square by drawing two overlapping squares
     rect1 = pygame.Rect(x * Board.sqr_length, y * Board.sqr_length, Board.sqr_length, Board.sqr_length)
@@ -212,37 +211,6 @@ def draw_promotion_menu(gameDisplay, sqr):
     ptext.draw("Cancel", (x, y + (sqr_length_fifth * 4)), fontsize = sqr_length_fifth*1.8, color=(0,0,0))
 
 
-def draw_menu_selection(gameDisplay, sqr, pos):
-    sqr_length_fifth = Board.sqr_length / 5
-    y = (8 - sqr[1]) * Board.sqr_length
-    offset = pos[1] - y
-    num = math.floor(offset / sqr_length_fifth)
-    piece = None
-    colour = None
-    if Board.turn == Colour.WHITE:
-        colour = "w"
-    else:
-        colour = "b"
-    if num == 0:
-        piece = (Board.turn, PieceType.ROOK, colour + "-rook")
-        
-    elif num == 1:
-        piece = (Board.turn, PieceType.KNIGHT, colour + "-knight")
-    elif num == 2:
-        piece = (Board.turn, PieceType.BISHOP, colour + "-bishop")
-    elif num == 3:
-        piece = (Board.turn, PieceType.QUEEN, colour + "-queen")
-    elif num == 4:
-        piece = (Board.turn, PieceType.PAWN, colour + "-pawn")
-
-    Board.promotion_menu_sqrs.remove(sqr)
-
-    # Updates active pieces, and draws the piece onto its new position
-    Board.activePieces[sqr] = piece
-    sqrColour = Board.get_square_colour(sqr)
-    draw_empty_square(gameDisplay, sqr, sqrColour)
-    draw_piece(gameDisplay, piece, sqr)
-
 
 # Removes any promotion menus that are currently present on the board
 def remove_promotion_menus(gameDisplay):
@@ -294,17 +262,110 @@ def draw_main_menu(gameDisplay, width, height):
     pygame.draw.rect(gameDisplay, backgroundColour, background)
 
     fontsize = min(width, height) / 8
-    newX = width / 80
-    newY = height / 16
+    titleX = width / 80
+    titleY = height / 16
 
     # Draws the title
-    ptext.draw("Chess", (newX, newY), color=(255, 0, 0), fontsize = fontsize, underline=True)
+    ptext.draw("Chess", (titleX, titleY), color=(255, 0, 0), fontsize = fontsize, underline=True)
 
 
     itemFontSize = fontsize * 2/3
 
     # Draws the items of the main menu
-    ptext.draw("2 player", (newX, newY * 4), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("2 player", (titleX, titleY * 4), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("Multiplayer", (titleX, titleY * 5), color = (255, 0, 0), fontsize = itemFontSize)
+
+
+def set_up_multiplayer_screen(gameDisplay, width, height):
+    # Draws the background of the set up multiplayer screen
+    background = pygame.Rect(0, 0, width, height)
+    backgroundColour = pygame.Color(252, 219, 126)
+    pygame.draw.rect(gameDisplay, backgroundColour, background)
+
+    fontsize = min(width, height) / 8
+    titleX = width / 80
+    titleY = height / 16
+
+    # Draws the title
+    ptext.draw("Set up game", (titleX, titleY), color=(255, 0, 0), fontsize = fontsize, underline=True)
+
+    itemFontSize = fontsize * 2/3
+
+    # Draws the items of the multiplayer menu
+    ptext.draw("Host game", (titleX, titleY * 4), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("Join game", (titleX, titleY * 5), color = (255, 0, 0), fontsize = itemFontSize)
+
+
+def set_up_host_screen(state, host, port):
+    # Draws the background of the set up multiplayer screen
+    background = pygame.Rect(0, 0, state.WIDTH, state.HEIGHT)
+    backgroundColour = pygame.Color(252, 219, 126)
+    pygame.draw.rect(state.GAME_DISPLAY, backgroundColour, background)
+
+    fontsize = min(state.WIDTH, state.HEIGHT) / 8
+    titleX = state.WIDTH / 80
+    titleY = state.HEIGHT / 16
+
+    # Draws the title
+    ptext.draw("Host game", (titleX, titleY), color=(255, 0, 0), fontsize = fontsize, underline=True)
+
+    itemFontSize = fontsize * 2/3
+
+    # Draws the items of the multiplayer menu
+    ptext.draw("IP Address: " + host, (titleX, titleY * 4), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("Port: " + str(port), (titleX, titleY * 5), color = (255, 0, 0), fontsize = itemFontSize)
+
+
+def set_up_join_screen(gameDisplay, width, height, address, portStr, joinGameMsg):
+    # Draws the background of the set up multiplayer screen
+    background = pygame.Rect(0, 0, width, height)
+    backgroundColour = pygame.Color(252, 219, 126)
+    pygame.draw.rect(gameDisplay, backgroundColour, background)
+
+    fontsize = min(width, height) / 8
+    titleX = width / 80
+    titleY = height / 16
+
+    # Draws the title
+    ptext.draw("Join game", (titleX, titleY), color=(255, 0, 0), fontsize = fontsize, underline=True)
+
+    itemFontSize = fontsize * 1/2
+
+    # Draws the input box of the ip address
+    ipBoxBlack = pygame.Rect(width/3, titleY * 7, width * 2/3, itemFontSize)
+    black = pygame.Color(0, 0, 0)
+    pygame.draw.rect(gameDisplay, black, ipBoxBlack)
+
+    ipBoxWhite = pygame.Rect(width/3 + 2, titleY * 7 + 2, width * 2/3 - 4, itemFontSize - 4)
+    white = pygame.Color(255, 255, 255)
+    pygame.draw.rect(gameDisplay, white, ipBoxWhite)
+
+    ptext.draw(address, (ipBoxBlack.x, ipBoxBlack.y), color = (255, 0, 0), fontsize = itemFontSize - 4)
+
+    # Draws the input box of the port
+    portBoxBlack = pygame.Rect(width/3, titleY * 8, width * 2/3, itemFontSize)
+    black = pygame.Color(0, 0, 0)
+    pygame.draw.rect(gameDisplay, black, portBoxBlack)
+
+    portBoxWhite = pygame.Rect(width/3 + 2, titleY * 8 + 2, width * 2/3 - 4, itemFontSize - 4)
+    white = pygame.Color(255, 255, 255)
+    pygame.draw.rect(gameDisplay, white, portBoxWhite)
+
+    ptext.draw(portStr, (portBoxWhite.x, portBoxWhite.y), color = (255, 0, 0), fontsize = itemFontSize - 4)
+
+    # Draws the items of the multiplayer menu
+    ptext.draw("Please enter the IP address and the port", (titleX, titleY * 4), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("of the host you want to join.", (titleX, titleY * 5), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("IP Address: ", (titleX, titleY * 7), color = (255, 0, 0), fontsize = itemFontSize)
+    ptext.draw("Port: ", (titleX, titleY * 8), color = (255, 0, 0), fontsize = itemFontSize)
+
+
+    ptext.draw(joinGameMsg, (titleX, titleY * 10), color = (255, 0, 0), fontsize = itemFontSize)
+
+
+
+
+
 
 
 

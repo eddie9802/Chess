@@ -8,7 +8,7 @@ def select_mainmenu_item(pos, width, height):
 
     multiplayerY = (height / 16) * 5
     if pos[1] >= multiplayerY and pos[1] <= multiplayerY + (height / 16):
-        return Window.MULTIPLAYER
+        return Window.MULTIPLAYER_MENU
     return None
 
 # Takes the mouse click coordinates and works out what item the user has selected on the main menu

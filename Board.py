@@ -35,6 +35,7 @@ bKingMoved = False
 sqr_length = 100
 
 GAME_FINISHED = False
+PLAYER_COLOUR = None
 
 
 
@@ -114,7 +115,11 @@ activePieces = get_all_pieces()
 
 # Takes a sqr and determines the position of that square 
 def get_square_colour(sqr):
+    if PLAYER_COLOUR == Colour.BLACK:
+        invertedSqr = Draw.invertSqr(sqr)
+        sqr = invertedSqr
     x = ord(sqr[0]) - 97 # Gets the unicode value of the x part of the squares position
+
     if x % 2 == 0:
         if sqr[1] % 2 == 0:
             return Draw.WHITE
@@ -147,7 +152,6 @@ def is_friendly_piece(piece):
 # Promotes a pawn
 def promote_pawn(sqr):
     global selected_sqr
-    moveMade = False
     if selected_sqr != None:
         Draw.remove_selection_outline(GAME_DISPLAY)
     if highlightsOn:
@@ -161,9 +165,6 @@ def promote_pawn(sqr):
             (Colour.BLACK == piece[0] and piece[1] == PieceType.PAWN  and sqr[1] == 1))) and sqr not in promotion_menu_sqrs:
             Draw.draw_promotion_menu(GAME_DISPLAY, sqr)
             promotion_menu_sqrs.append(sqr)
-            moveMade = True
-
-    return moveMade
     
 
 
@@ -303,14 +304,14 @@ def check_if_move_is_legal(square):
         if square == move:
             check_for_king_move(select_square, square)
             move_piece(square)
-            return True
+            return "MoveMade"
             
     
     # Check for en passant move
     if square == enPassantMove:
         perform_enpassant(square)
-        return True
-    return False
+        return "MoveMade"
+    return "NoMoveMade"
 
 
 def get_sqr_xy(sqr):
@@ -320,15 +321,30 @@ def get_sqr_xy(sqr):
             
 
 def get_sqr_from_xy(pos):
+    """Takes a mouse click position and determines what square was clicked on.  Returns the square that was clicked on."""
     x = pos[0]
+    square = None
+    
     # This inverts the y value because in chess the y number increases from bottom to top
     y = (sqr_length * 8) - pos[1]
 
     xPos = math.floor(x / sqr_length)
-    yPos = math.floor(y / sqr_length)
+    rank = chr(xPos + 97)
+    sqrFile = math.floor(y / sqr_length) + 1 # 1 is added as files start from 1
 
     # The square the user clicked on is found and the store is denoted by a letter and a number in a tuple
-    square = (chr(xPos + 97), yPos + 1)
+    square = (rank, sqrFile)
+
+    if PLAYER_COLOUR == Colour.BLACK and turn == Colour.BLACK:
+        if x % sqr_length == 0 or x % sqr_length == sqr_length:
+            x = x + 1
+        # Inverts the rank and file of the square
+        invertedX = (8 * sqr_length) - x
+        invertedXPos = math.floor(invertedX / sqr_length)
+        invertedRank = chr(invertedXPos + 97)
+        invertedFile = 9 - sqrFile
+
+        square = (invertedRank, invertedFile)
     return square
 
 
@@ -347,7 +363,8 @@ def get_checker_piece():
 
 # Takes the use mouse click position and selects an item from the promotion menu
 def select_promotion_menu_item(gameDisplay, sqr, pos):
-    moveMade = False
+    global turn
+    retVal = "NoMoveMade"
     sqr_length_fifth = sqr_length / 5
     y = (8 - sqr[1]) * sqr_length
     offset = pos[1] - y
@@ -360,20 +377,20 @@ def select_promotion_menu_item(gameDisplay, sqr, pos):
         colour = "b"
     if num == 0:
         piece = (turn, PieceType.ROOK, colour + "-rook")
-        moveMade = True
+        retVal = "PawnPromoted"
         
     elif num == 1:
         piece = (turn, PieceType.KNIGHT, colour + "-knight")
-        moveMade = True
+        retVal = "PawnPromoted"
     elif num == 2:
         piece = (turn, PieceType.BISHOP, colour + "-bishop")
-        moveMade = True
+        retVal = "PawnPromoted"
     elif num == 3:
         piece = (turn, PieceType.QUEEN, colour + "-queen")
-        moveMade = True
+        retVal = "PawnPromoted"
     elif num == 4:
         piece = (turn, PieceType.PAWN, colour + "-pawn")
-        moveMade = True
+        retVal = "PawnPromoted"
 
     promotion_menu_sqrs.remove(sqr)
 
@@ -383,7 +400,13 @@ def select_promotion_menu_item(gameDisplay, sqr, pos):
     Draw.draw_empty_square(gameDisplay, sqr, sqrColour)
     Draw.draw_piece(gameDisplay, piece, sqr)
 
-    return moveMade
+    if retVal == "PawnPromoted":
+        if turn == Colour.WHITE:
+            turn = Colour.BLACK
+        else:
+            turn = Colour.WHITE
+
+    return retVal
 
 
 # Selects the square that was clicked on.  If user clicks on a friend piece then that piece is selected to move.  If user picks a square that does
@@ -433,7 +456,7 @@ def select_square(pos):
 
         elif selected_sqr != None:
             return check_if_move_is_legal(square)
-    return False
+    return "NoMoveMade"
 
 
 def dict_to_list(dictionary):
@@ -544,7 +567,7 @@ def castle(sqr):
     global selected_sqr
     global turn
 
-    moveMade = False
+    retVal = "NoMoveMade"
 
 
     if has_chess_piece(sqr):
@@ -555,27 +578,27 @@ def castle(sqr):
                     Draw.remove_selection_outline(GAME_DISPLAY)
                     selected_sqr = None
                     white_castle(sqr, ("c", 1), ("b", 1))
-                    moveMade = True
+                    retVal = "MoveMade"
 
                 elif sqr == ("h", 1) and not has_chess_piece(("f", 1)) and not has_chess_piece(("g", 1)):
                     Draw.remove_selection_outline(GAME_DISPLAY)
                     selected_sqr = None
                     white_castle(sqr, ("f", 1), ("g", 1))
-                    moveMade = True
+                    retVal = "MoveMade"
 
             elif piece[0] == Colour.BLACK and not bKingMoved and selected_sqr == bKingPos:
                 if sqr == ("a", 8) and not has_chess_piece(("b", 8)) and not has_chess_piece(("c", 8)):
                     Draw.remove_selection_outline(GAME_DISPLAY)
                     selected_sqr = None
                     black_castle(sqr, ("c", 8), ("b", 8))
-                    moveMade = True
+                    retVal = "MoveMade"
 
                 elif sqr == ("h", 8) and not has_chess_piece(("f", 8)) and not has_chess_piece(("g", 8)):
                     Draw.remove_selection_outline(GAME_DISPLAY)
                     selected_sqr = None
                     black_castle(sqr, ("f", 8), ("g", 8))
-                    moveMade = True
-    return moveMade
+                    retVal = "MoveMade"
+    return retVal
         
 
         
@@ -584,11 +607,12 @@ def castle(sqr):
     
 
 # Initialises pygame and GAME_DISPLAY and sets up the initial board
-def init(gameDisplay):
+def init(gameDisplay, playerColour):
     global GAME_DISPLAY
+    global PLAYER_COLOUR
     GAME_DISPLAY = gameDisplay
-    Draw.draw_empty_board(GAME_DISPLAY) # Draws an empty board
-    Draw.populate_board(GAME_DISPLAY) # Fills the empty board
+    PLAYER_COLOUR = playerColour
+    Draw.redraw_board(gameDisplay)
 
 
 

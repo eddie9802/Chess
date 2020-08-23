@@ -20,6 +20,9 @@ HIGHLIGHTED_BLACK = HIGHLIGHTED_GRAY
 def remove_selection_outline(gameDisplay):
     """Removes the selection outline from the current selected square"""
     selected_sqr = Board.selected_sqr
+    if Board.PLAYER_COLOUR == Colour.BLACK and Board.selected_sqr != None:
+        invertedSqr = invertSqr(Board.selected_sqr)
+        selected_sqr = invertedSqr
     if selected_sqr != None:
         x = ord(selected_sqr[0]) - 97
         y = 8 - selected_sqr[1]
@@ -28,7 +31,7 @@ def remove_selection_outline(gameDisplay):
         pygame.draw.rect(gameDisplay, colour, rect)
 
 
-        piece_path = "./Images/pieces/01_classic/" + Board.activePieces[selected_sqr][2] + ".png"
+        piece_path = "./Images/pieces/01_classic/" + Board.activePieces[Board.selected_sqr][2] + ".png"
         image = pygame.transform.scale(pygame.image.load(piece_path), (Board.sqr_length, Board.sqr_length))
         gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
@@ -38,6 +41,12 @@ def remove_selection_outline(gameDisplay):
 
 # Draws a square around the selected square of the chess board
 def draw_selection(gameDisplay, square):
+
+    sqr = square
+    if Board.PLAYER_COLOUR == Colour.BLACK:
+        invertedSqr = invertSqr(square)
+        square = invertedSqr
+
     x = ord(square[0]) - 97
     y = 8 - square[1]
 
@@ -56,13 +65,16 @@ def draw_selection(gameDisplay, square):
     rect2_colour = Board.get_square_colour(square)
     pygame.draw.rect(gameDisplay, rect2_colour, rect2)
 
-    piece_path = "./Images/pieces/01_classic/" + Board.activePieces[square][2] + ".png"
+    piece_path = "./Images/pieces/01_classic/" + Board.activePieces[sqr][2] + ".png"
     image = pygame.transform.scale(pygame.image.load(piece_path), (Board.sqr_length, Board.sqr_length))
     gameDisplay.blit(image, (x * Board.sqr_length, y * Board.sqr_length))
 
 
 # Draws piece at square
 def draw_piece(gameDisplay, piece, square):
+    if Board.PLAYER_COLOUR == Colour.BLACK:
+        invertedSqr = invertSqr(square)
+        square = invertedSqr
     image = pygame.transform.scale(pygame.image.load("./Images/pieces/01_classic/" + piece[2] + ".png"), (Board.sqr_length, Board.sqr_length))
     x = ord(square[0]) - 97 # Gets the x axis value of the piece
 
@@ -72,6 +84,9 @@ def draw_piece(gameDisplay, piece, square):
 
 # Draws an empty square at the position square
 def draw_empty_square(gameDisplay, square, colour):
+    if Board.PLAYER_COLOUR == Colour.BLACK:
+        invertedSqr = invertSqr(square)
+        square = invertedSqr
     x = ord(square[0]) - 97
     y = 8 - square[1]
 
@@ -79,10 +94,9 @@ def draw_empty_square(gameDisplay, square, colour):
     pygame.draw.rect(gameDisplay, colour, rect)
 
 
-# Draws an empty board
 def draw_empty_board(gameDisplay):
+    """Draws an empty board"""
     isBeige = False
-    # Colours squares based on the parity of their rank and file
     for x in range(8):
         isBeige = not isBeige
         for y in range(8):
@@ -227,10 +241,21 @@ def highlight_all_squares(gameDisplay):
     for sqr in highlighted_sqrs:
         highlight_square(gameDisplay, sqr)
 
+def invertSqr(sqr):
+    """Takes a square and inverts its rank and file to get the inverted sqr of that square."""
+    rank = sqr[0]
+    rankNum = ord(rank) - 97
+    invertedRankNum = 7 - rankNum
+    invertedRank = chr(invertedRankNum + 97)
+
+    sqrFile = sqr[1]
+    invertedSqrFile = 9 - sqrFile
+
+    invertedSqr = (invertedRank, invertedSqrFile)
+    return invertedSqr
 
 def redraw_board(gameDisplay):
     draw_empty_board(gameDisplay)
-
     for sqr in Board.activePieces:
         piece = Board.activePieces[sqr]
         colour = Board.get_square_colour(sqr)
@@ -254,6 +279,7 @@ def redraw_board(gameDisplay):
             ptext.draw("White wins!", (Board.sqr_length / 5, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
         else:
             ptext.draw("Black wins!", (Board.sqr_length / 5, (boardLength / 2) - (boardLength / 8)), fontsize = boardLength / 8, color=(255, 0, 0))
+
 
 def draw_main_menu(gameDisplay, width, height):
     # Draws the main menu background

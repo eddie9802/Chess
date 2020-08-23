@@ -3,9 +3,9 @@ import socket
 import miniupnpc
 import atexit
 import threading
+
+import Multiplayer
 import Main
-import pickle
-import pygame
 
 UPNP = None
 HOST = None
@@ -14,19 +14,6 @@ PORT = None
 
 def get_free_port(host):
     port = 5001
-    # testSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # foundFreePort = False
-    # while not foundFreePort:
-    #     location = ("127.0.0.1", port)
-    #     result_of_check = testSocket.connect_ex(location)
-
-    #     if result_of_check == 0:
-    #         foundFreePort = True
-    #     print(port)
-
-    #     port += 1
-        
-    # testSocket.close()
     foundFreePort = False
     while not foundFreePort:
         try:
@@ -57,31 +44,24 @@ def forward_port():
     return upnp, upnp.lanaddr, port 
 
 
-def create_server_socket(state, condition):
+
+def create_server_socket(gameState, condition):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST, PORT))
         s.listen()
         conn, addr = s.accept()
-        state.CONNECTION_SUCCESS = True
+        gameState.CONNECTION_SUCCESS = True
         gameEnded = False
         with conn:
             print('Connected by', addr)
             while True:
                 with condition:
+                    #  The sending of a move
+                    Multiplayer.send_move(gameState, conn, condition)
 
-                    # The sending of a move
-                    condition.wait()
-                    move = pickle.dumps((state.SELECTED_SQR, state.CLICKED_POS, state.MOUSE_CLICK))
-                    conn.sendall(move)
-                    data = conn.recv(1024)
-                    move = pickle.loads(data)
-                    state.SELECTED_SQR = move[0]
-                    state.CLICKED_POS = move[1]
-                    state.MOUSE_CLICK = move[2]
-                    event = pygame.event.Event(pygame.USEREVENT)
-                    event.button = state.MOUSE_CLICK
-                    state.RECEIVED_MOVE = True
-                    pygame.event.post(event)
+                    # Receving a move
+                    Multiplayer.receive_move(gameState, conn)
+
 
 
 def exit_handler():
@@ -90,13 +70,13 @@ def exit_handler():
 
 atexit.register(exit_handler)
 
-def start_server(state, condition):
+def start_server(gameState, condition):
     global UPNP
     global HOST
     global PORT
     UPNP, HOST, PORT = forward_port()
     try:
-        t = threading.Thread(target = create_server_socket, args=(state, condition, ))
+        t = threading.Thread(target = create_server_socket, args=(gameState, condition, ))
         t.daemon = True # die when the main thread dies
         t.start()
     except Exception as e:

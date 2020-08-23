@@ -37,6 +37,8 @@ class GameState():
     MOUSE_CLICK = None
     RECEIVED_MOVE = False
     setUpMainMenu = False
+    typeOfMove = None
+    sentPiece = None
 
 def _resize_screen(newScreenDimensions, gameState):
     """Takes the new size of the screen and updates the pygame display as well as the game state"""
@@ -73,6 +75,7 @@ def _main_menu_event(event, gameState):
             gameState.CURRENT_WINDOW = itemSelected
             gameState.hasSetUpMainMenu = False
 
+
 def _process_left_click_ingame(mouseClickPos):
     """Takes the left mouse click position and selects a square on the chess board with it, then it checks if a checkmate has occurred"""
     moveMade = Board.select_square(mouseClickPos)
@@ -82,7 +85,6 @@ def _process_left_click_ingame(mouseClickPos):
         else:
             ptext.draw("Black wins!", (20, (gameState.HEIGHT / 2) - (gameState.HEIGHT / 8)), fontsize = gameState.HEIGHT / 8, color=(255, 0, 0))
         Board.GAME_FINISHED = True
-
     return moveMade
 
 
@@ -90,47 +92,80 @@ def _send_left_click(mouseClickPos, gameState, condition):
     """Sends the left click pos and the selected square of the chess board, to the opponent, for them to process.
         Mouse click will not be sent, if it does not result in a move on the chess board being made."""
     prevSelectedSqr = Board.selected_sqr
-    moveMade = _process_left_click_ingame(mouseClickPos)
-    if moveMade == True:
+    retVal = _process_left_click_ingame(mouseClickPos)
+    # Inverts the mouse click if the black player has made a move so that the correct piece is selected on the white players side
+    if gameState.PLAYER_COLOUR == Colour.BLACK and Board.turn != Colour.BLACK:
+        mouseClickPos = _invert_mouse_click(mouseClickPos)
+    if retVal == "MoveMade":
         gameState.SELECTED_SQR = prevSelectedSqr
         gameState.CLICKED_POS = mouseClickPos
         gameState.MOUSE_CLICK = gameState.LEFT
+        gameState.typeOfMove = retVal
         with condition:
             condition.notify()
+    elif retVal == "PawnPromoted":
+        gameState.SELECTED_SQR = prevSelectedSqr
+        gameState.CLICKED_POS = mouseClickPos
+        gameState.MOUSE_CLICK = gameState.LEFT
+        gameState.typeOfMove = retVal
+        gameState.sentPiece = Board.activePieces[prevSelectedSqr]
+        with condition:
+            condition.notify()
+
 
 def _process_right_click_ingame(mouseClickPos):
     """Takes the right mouse click position and checks if the user wants to castle or promote a pawn.  If they do then it executes that action.
         Returns a boolean which denotes whether a castling or pawn promotion has occurred."""
+    selectedSqr = None
     sqr = Board.get_sqr_from_xy(mouseClickPos)
-    moveMade = False
+    retVal = "NoMoveMade"
+    if gameState.PLAYER_COLOUR == Colour.BLACK and Board.turn == Colour.BLACK:
+        mouseClickPos = _invert_mouse_click(mouseClickPos)
     if Board.has_chess_piece(sqr):
         piece = Board.activePieces[sqr]
         if piece[1] == PieceType.ROOK:
-            moveMade = Board.castle(sqr)
+            selectedSqr = Board.selected_sqr
+            retVal = Board.castle(sqr)
         elif piece[1] == PieceType.PAWN:
-            moveMade = Board.promote_pawn(sqr)
-    return moveMade
+            selectedSqr = sqr
+            Board.selected_sqr = selectedSqr
+            Board.promote_pawn(sqr)
+    return retVal, selectedSqr
 
 
-def _send_right_click(mouseClickPos, condition):
+def _send_right_click(mouseClickPos, condition, gameState):
     """Sends the right click position and the selected square to the oppponent only if the right click is a valid castling or pawn promotion move."""
-    prevSelectedSqr = Board.selected_sqr
-    moveMade = _process_right_click_ingame(mouseClickPos)
-    if moveMade == True:
-        gameState.CLICKED_POS = mouseClickPos
-        gameState.MOUSE_CLICK = gameState.RIGHT
+    retVal, prevSelectedSqr = _process_right_click_ingame(mouseClickPos)
+
+    if gameState.PLAYER_COLOUR == Colour.BLACK and Board.turn == Colour.BLACK:
+        mouseClickPos = _invert_mouse_click(mouseClickPos)
+
+    if retVal == "MoveMade":
         gameState.SELECTED_SQR = prevSelectedSqr
+        gameState.CLICKED_POS = mouseClickPos
+        gameState.MOUSE_CLICK = gameState.LEFT
+        gameState.typeOfMove = retVal
         with condition:
             condition.notify()
 
 
-def _receive_left_click():
+def _receive_left_click(gameState):
     """Processes the left click and selected square that the opponent sent in multiplayer."""
-    Board.selected_sqr = gameState.SELECTED_SQR
-    leftClickPos = gameState.CLICKED_POS
-    selectedSqrScreenPos = Board.get_sqr_xy(gameState.SELECTED_SQR)
-    Board.select_square(selectedSqrScreenPos)
-    Board.select_square(leftClickPos)
+    if gameState.typeOfMove == "MoveMade":
+        Board.selected_sqr = gameState.SELECTED_SQR
+        selectedSqrScreenPos = Board.get_sqr_xy(gameState.SELECTED_SQR)
+        Board.select_square(selectedSqrScreenPos)
+        leftClickPos = gameState.CLICKED_POS
+        Board.select_square(leftClickPos)
+    elif gameState.typeOfMove == "PawnPromoted":
+        Board.activePieces[gameState.SELECTED_SQR] = gameState.sentPiece
+        colour = Board.get_square_colour(gameState.SELECTED_SQR)
+        Draw.draw_empty_square(gameState.GAME_DISPLAY, gameState.SELECTED_SQR, colour)
+        Draw.draw_piece(gameState.GAME_DISPLAY, gameState.sentPiece, gameState.SELECTED_SQR)
+        if Board.turn == Colour.WHITE:
+            Board.turn = Colour.BLACK
+        else:
+            Board.turn = Colour.WHITE
 
     # Checks if a checkmate has occurred.  If it has then the proper message is displayed to the user
     if Board.check_for_checkmate():
@@ -140,9 +175,10 @@ def _receive_left_click():
             ptext.draw("Black wins!", (20, (gameState.HEIGHT / 2) - (gameState.HEIGHT / 8)), fontsize = gameState.HEIGHT / 8, color=(255, 0, 0))
         Board.GAME_FINISHED = True
     gameState.RECEIVED_MOVE = False
+        
 
 
-def _receive_right_click():
+def _receive_right_click(gameState):
     """Processes the right click position and selected square which the opponent has sent."""
     Board.selected_sqr = gameState.SELECTED_SQR
     rightClickPos = gameState.CLICKED_POS
@@ -150,10 +186,21 @@ def _receive_right_click():
     gameState.RECEIVED_MOVE = False
 
 
+def _invert_mouse_click(mouseClickPos):
+    """Takes the position that the mouse click occurred and inverts it."""
+    invertedX = (Board.sqr_length * 8) - mouseClickPos[0]
+    invertedY = (Board.sqr_length * 8) - mouseClickPos[1]
+    invertedMouseClick = (invertedX, invertedY)
+    return invertedMouseClick
+
+
 def game_loop(gameState):
     """The main game loop of the chess program"""
+
     pygame.init()
     pygame.display.set_caption('My Chess')
+    song = pygame.mixer.Sound("I've Just Seen A Face.wav")
+    pygame.mixer.Sound.play(song, loops = -1)
     clock = pygame.time.Clock()
     hasQuit = False
     hasSetUpBoard = False
@@ -180,7 +227,7 @@ def game_loop(gameState):
                 elif gameState.CURRENT_WINDOW == Window.TWO_PLAYER:
                     # Sets up the initial chess board
                     if not hasSetUpBoard:
-                        Board.init(gameState.GAME_DISPLAY)
+                        Board.init(gameState.GAME_DISPLAY, gameState.PLAYER_COLOUR)
                         hasSetUpBoard = True
 
                     # Resizes the chess board
@@ -201,7 +248,7 @@ def game_loop(gameState):
                         mouseClickPos = pygame.mouse.get_pos()
                         if multiplayer:
                             if gameState.PLAYER_COLOUR == Board.turn:
-                                _send_right_click(mouseClickPos, condition)
+                                _send_right_click(mouseClickPos, condition, gameState)
                         else:
                             _process_right_click_ingame(mouseClickPos)
 
@@ -209,15 +256,15 @@ def game_loop(gameState):
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             Draw.remove_all_highlights(gameState.GAME_DISPLAY)
-                            Draw.remove_selection(gameState.GAME_DISPLAY)
+                            Draw.remove_selection_outline(gameState.GAME_DISPLAY)
 
                     # This is for playing received moves from the opponent made with the left click
                     elif multiplayer and gameState.PLAYER_COLOUR != Board.turn and gameState.RECEIVED_MOVE and gameState.MOUSE_CLICK == gameState.LEFT:
-                        _receive_left_click()
+                        _receive_left_click(gameState)
 
                     # This is for playing received moves from the opponent made with the right click
                     elif multiplayer and gameState.PLAYER_COLOUR != Board.turn and gameState.RECEIVED_MOVE and gameState.MOUSE_CLICK == gameState.RIGHT:
-                        _receive_right_click()
+                        _receive_right_click(gameState)
                         
                 
                 # Draws the set up multiplayer screen

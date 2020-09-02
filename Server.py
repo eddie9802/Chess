@@ -10,6 +10,7 @@ import Main
 UPNP = None
 HOST = None
 PORT = None
+EXTERNALIP = None
 
 
 def get_free_port(host):
@@ -41,7 +42,8 @@ def forward_port():
 
     # addportmapping(external-port, protocol, internal-host, internal-port, description, remote-host)
     upnp.addportmapping(port, 'TCP', upnp.lanaddr, port, 'testing', '')
-    return upnp, upnp.lanaddr, port 
+
+    return upnp, upnp.lanaddr, port, upnp.externalipaddress()
 
 
 
@@ -74,12 +76,13 @@ def start_server(gameState, condition):
     global UPNP
     global HOST
     global PORT
-    UPNP, HOST, PORT = forward_port()
+    global EXTERNALIP
+    UPNP, HOST, PORT, EXTERNALIP = forward_port()
     try:
         t = threading.Thread(target = create_server_socket, args=(gameState, condition, ))
         t.daemon = True # die when the main thread dies
         t.start()
     except Exception as e:
         print (e)
-    return HOST, PORT
+    return EXTERNALIP, PORT
 

@@ -192,13 +192,15 @@ def check_for_king_move(selectedSqr, newPos):
     has moved is set to True."""
     global bKingPos
     global wKingPos
+    global bKingMoved
+    global wKingMoved
 
-    # Sets the global king pos if the selected square was a king
-    if selectedSqr == bKingPos:
+    # Sets the global king pos if the selected square was a king and sets the kingMoves boolean to true
+    if selected_sqr[0] == bKingPos[0] and selected_sqr[1] == bKingPos[1]:
         bKingPos = newPos
         if not bKingMoved:
             bKingMoved = True
-    elif selectedSqr == wKingPos:
+    elif selected_sqr[0] == wKingPos[0] and selected_sqr[1] == wKingPos[1]:
         wKingPos = newPos
         if not wKingMoved:
             wKingMoved = True

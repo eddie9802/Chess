@@ -12,7 +12,6 @@ from Window import Window
 from PieceType import PieceType
 
 import math
-import miniupnpc
 import threading
 from time import sleep
 
@@ -199,8 +198,8 @@ def game_loop(gameState):
 
     pygame.init()
     pygame.display.set_caption('My Chess')
-    song = pygame.mixer.Sound("I've Just Seen A Face.wav")
-    pygame.mixer.Sound.play(song, loops = -1)
+    #song = pygame.mixer.Sound("Data/I've Just Seen A Face.wav")
+    #pygame.mixer.Sound.play(song, loops = -1)
     clock = pygame.time.Clock()
     hasQuit = False
     hasSetUpBoard = False

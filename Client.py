@@ -1,6 +1,5 @@
 
 import socket
-import miniupnpc
 import sys
 import threading
 import pygame

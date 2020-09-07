@@ -1,14 +1,14 @@
 
 import socket
-import miniupnpc
 import atexit
 import threading
+import subprocess
+import os
 
 import Multiplayer
 import Main
 
-UPNP = None
-HOST = None
+INTERNALIP = None
 PORT = None
 EXTERNALIP = None
 
@@ -28,28 +28,25 @@ def get_free_port(host):
 
 
 def forward_port():
-    upnp = miniupnpc.UPnP()
 
-    upnp.discoverdelay = 10
-    upnp.discover()
+    # Gets the internal and external ip addresses of the device
+    os.system('ip route get 8.8.8.8 | sed -n \'/src/{s/.*src *\\([^ ]*\\).*/\\1/p;q}\' > tmp')
+    os.system('curl ifconfig.me >> tmp')
+    with open("tmp") as f:
+        interalIP = f.readline().rstrip('\n')
+        externalIP = f.readline().rstrip('\n')
+    os.system('rm tmp')
 
-    upnp.selectigd()
-    port = get_free_port(upnp.lanaddr)
-    # r = upnp.getspecificportmapping(port, 'TCP')
-    # while r != None and port < 65536:
-    #     port += 1
-    r = upnp.getspecificportmapping(port, 'TCP')
+    port = get_free_port(interalIP)
+    os.system('upnpc -a ' + interalIP + ' ' + str(port) + ' ' + str(port) + ' tcp')
 
-    # addportmapping(external-port, protocol, internal-host, internal-port, description, remote-host)
-    upnp.addportmapping(port, 'TCP', upnp.lanaddr, port, 'testing', '')
-
-    return upnp, upnp.lanaddr, port, upnp.externalipaddress()
+    return interalIP, port, externalIP
 
 
 
 def create_server_socket(gameState, condition):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
+        s.bind((INTERNALIP, PORT))
         s.listen()
         conn, addr = s.accept()
         gameState.CONNECTION_SUCCESS = True
@@ -67,17 +64,16 @@ def create_server_socket(gameState, condition):
 
 
 def exit_handler():
-    if PORT != None and HOST != None and UPNP != None:
-        UPNP.deleteportmapping(PORT, 'TCP')
+    if PORT != None and EXTERNALIP != None and INTERNALIP != None:
+        os.system('upnpc -d ' + str(PORT) + ' tcp')
 
 atexit.register(exit_handler)
 
 def start_server(gameState, condition):
-    global UPNP
-    global HOST
+    global INTERNALIP
     global PORT
     global EXTERNALIP
-    UPNP, HOST, PORT, EXTERNALIP = forward_port()
+    INTERNALIP, PORT, EXTERNALIP = forward_port()
     try:
         t = threading.Thread(target = create_server_socket, args=(gameState, condition, ))
         t.daemon = True # die when the main thread dies

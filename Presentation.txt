@@ -1,0 +1,49 @@
+The code I am going to present to you is a Chess program that I programmed in Python.  I choose Python because I like it and find it easy to write programs 
+using it.
+
+
+Here is an overview of all the files used in the chess program.
+Main.py is the main file that drives execution of the chess program.  It contains the main loop as well as the event handler.
+Board.py is used to keep the state of the chess game and perform operations on the state as well.
+Draw.py is used to draw anything that appears within the window.
+Colour.py is a class that is used as an enumeration and is made up of black and white.
+Move.py calulates the legal moves that a piece on the chess board can do.
+Piecetype.py is a class that is used as an enumeration that contains all the types of pieces that a chess piece can be.
+Window.py is an enumeration that contains all the types of window that can be displayed.
+Menu.py contains functions that take a mouse click position and check if any item on the menu corresponding to the function have been selected.
+ptext.py I didn't write ptext.py but its used to draw text on the window.
+Multiplayer.py has the functions receive and send moves which are used by client.py and server.py
+Client.py is used by the computer that connects to the host of the chess game and it sends and receives moves to and from the Server.py
+Server.py is used by the computer that hosts the chess game and it sends and receives moves to and from client.py
+
+Main.py
+I'll start off with Main.py.  This is where the chess program is run from and it contains the main loop.  For the Chess program, I used a python module called
+pygame, which is widely used to create games.  I use Pygame to display a window and draw objects on said window.  The most important function within 
+Main.py  is game_loop() which initialises the game, deals with events and updates the window appropriately.  The main structure within game_loop is for 
+loop that is nested in a while loop which is an event handler.  The for loop iterates though all the pygame events.  Events in pygame is user input such as a
+mouse click or a key press.  The while loop ensures that the program listens for input when there are no events to iterate through in the for loop and only 
+exits when the user hits the exit button on the window and the boolean hasQuit is set to True.
+All of the booleans above the for loop are used to tell the program what the current window is.  For example the hasSetUpBoard boolean is set to true when 
+the user is in a chess game.  This means that when hasSetUpBoard is set to true,  all events in the for loop are dealt with assume that the current window 
+is a chess game so mouse click move a piece etc.
+
+
+Menu.py
+Menu.py is a file that contains functions that determine if a given mouse click has selected an item on a menu.  Each function within Menu corresponds to a 
+different menu in the Chess game.  For example the function select_mainmenu_item(pos, width, height) is used to determine if the mouse click denoted by the 
+coordinates in pos has clicked on an item in the main menu.  If it has the item that the mouse click has clicked on is found and appropriate action is taken.
+
+Board.py
+Board.py is used to initialise the state of a chess game and perform operations on the state.  The board is initialised with the function board.init().  This 
+creates the structure that holds the state of the chess game.  The chess game state is held in a dictionary structure which contains only the chess pieces 
+that are currently on the board.  Each chess piece is indexed by its position which is a tuple where the two indexes are the rank and file of the piece.
+Board.py deals with left and right clicks that the user gives during the chess game.  To make a move the user must click on one of their own pieces to select 
+it and then one of the pieces legal moves which can be either an empty square or an enemy piece.  Board.py has a global variable that keeps track of what 
+piece is current selected and it does this by holding the selected pieces position.  When a user selects a chess piece all of the possible moves that that 
+chess piece in the position have to be calculated and put into a global varaible.  It does this using the Move.py file.  Once all of the legal moves for a 
+chess piece have been calculated and put into the legalMoves global variable if the user clicks on another square that is not one of their own pieces then 
+using the legalMoves global variable it can be checked if the user has just made a move.  If they have the game state (activePieces) is updated and using 
+functions in Draw.py the window is updated. 
+
+Move.py
+Move.py is used to calculate the legal moves that any given chess piece on the the board can make.

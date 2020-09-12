@@ -198,8 +198,6 @@ def game_loop(gameState):
 
     pygame.init()
     pygame.display.set_caption('My Chess')
-    #song = pygame.mixer.Sound("Data/I've Just Seen A Face.wav")
-    #pygame.mixer.Sound.play(song, loops = -1)
     clock = pygame.time.Clock()
     hasQuit = False
     hasSetUpBoard = False

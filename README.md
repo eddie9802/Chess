@@ -1,7 +1,7 @@
 # Chess
 This is an implementation of Chess written in python using the python module Pygame.  It has local 2 player or online multiplayer features.
 
-#How to run
+##How to run
 Currently only runs in Linux.
 To run enter the following command into the terminal - python3 Main.py
 

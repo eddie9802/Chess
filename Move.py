@@ -391,9 +391,6 @@ def check_for_check(oldKingPos, newKingPos):
         if piece[0] != Board.turn:
             pos = item[0]
             moves, passingPiecePos, enPassantMove = get_legal_moves(piece, pos, False, None)
-            print(piece)
-            print(moves)
-            print()
             if newKingPos != None:
                 kingPos = newKingPos
             else:

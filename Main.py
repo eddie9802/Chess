@@ -197,7 +197,7 @@ def game_loop(gameState):
     """The main game loop of the chess program"""
 
     pygame.init()
-    pygame.display.set_caption('My Chess')
+    pygame.display.set_caption('Chess Master')
     clock = pygame.time.Clock()
     hasQuit = False
     hasSetUpBoard = False

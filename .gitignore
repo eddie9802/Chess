@@ -2,3 +2,6 @@ log.txt
 __pycache__
 build
 dist
+dist
+.venv
+*.spec

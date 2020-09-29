@@ -91,7 +91,6 @@ def get_pawn_moves(pawnSqr):
     return legalMoves, passingPiecePos, enPassantMove
 
 
-
 # Gets all legal moves for the rook
 def get_rook_moves(rookSqr):
     rook = Board.activePieces[rookSqr]
@@ -354,11 +353,14 @@ def get_king_moves(kingSqr, checkForCheck):
                 if not Board.has_chess_piece(sqr):
                     if checkForCheck and not check_for_check(kingSqr, sqr):
                         legalMoves.append(sqr)
+                    elif not checkForCheck:
+                        legalMoves.append(sqr)
                 else:
                     piece = Board.activePieces[sqr]
                     if king[0] != piece[0] and checkForCheck and not check_for_check(kingSqr, sqr):
                         legalMoves.append(sqr)
-
+                    elif king[0] != piece[0] and not checkForCheck:
+                        legalMoves.append(sqr)
 
 
     return legalMoves
@@ -389,6 +391,9 @@ def check_for_check(oldKingPos, newKingPos):
         if piece[0] != Board.turn:
             pos = item[0]
             moves, passingPiecePos, enPassantMove = get_legal_moves(piece, pos, False, None)
+            print(piece)
+            print(moves)
+            print()
             if newKingPos != None:
                 kingPos = newKingPos
             else:
